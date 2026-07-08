@@ -45,6 +45,7 @@ if (!existing) {
     role: 'super_admin',
     companyId: company.id,
     isActive: true,
+    isVerified: true,
   })
   await UserCompany.create({ userId: admin.id, companyId: company.id })
   console.log('✅ Admin created: admin@osgroup.com / Admin@1234')

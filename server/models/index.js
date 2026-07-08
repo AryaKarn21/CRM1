@@ -6,184 +6,324 @@
 // defined, and before sequelize.sync() / any queries run. It is
 // imported from server.js.
 
-import Company from './Company.js'
-import User from './User.js'
-import UserCompany from './UserCompany.js'
-import Account from './Account.js'
-import Contact from './Contact.js'
-import Opportunity from './Opportunity.js'
-import Lead from './Lead.js'
-import LeadNote from './LeadNote.js'
-import Employee from './Employee.js'
-import EmployeeDocument from './EmployeeDocument.js'
-import Attendance from './Attendance.js'
-import Leave from './Leave.js'
-import LeaveType from './LeaveType.js'
-import PayrollRun from './PayrollRun.js'
-import Payslip from './Payslip.js'
-import Expense from './Expense.js'
-import LedgerEntry from './LedgerEntry.js'
-import Warehouse from './Warehouse.js'
-import InventoryItem from './InventoryItem.js'
-import Asset from './Asset.js'
-import Vendor from './Vendor.js'
-import PurchaseOrder from './PurchaseOrder.js'
-import PurchaseOrderItem from './PurchaseOrderItem.js'
-import Project from './Project.js'
-import ProjectMember from './ProjectMember.js'
-import Task from './Task.js'
-import Ticket from './Ticket.js'
-import TicketReply from './TicketReply.js'
-import AuditLog from './AuditLog.js'
-import Role from './Role.js'
+import Company from "./Company.js";
+import User from "./User.js";
+import Meeting from './Meeting.js'
+import MeetingAttendee from "./MeetingAttendee.js";
+import UserCompany from "./UserCompany.js";
+import Account from "./Account.js";
+import Contact from "./Contact.js";
+import Opportunity from "./Opportunity.js";
+import Lead from "./Lead.js";
+import LeadNote from "./LeadNote.js";
+import Employee from "./Employee.js";
+import EmployeeDocument from "./EmployeeDocument.js";
+import Attendance from "./Attendance.js";
+import Leave from "./Leave.js";
+import LeaveType from "./LeaveType.js";
+import PayrollRun from "./PayrollRun.js";
+import Payslip from "./Payslip.js";
+import Expense from "./Expense.js";
+import LedgerEntry from "./LedgerEntry.js";
+import Warehouse from "./Warehouse.js";
+import InventoryItem from "./InventoryItem.js";
+import Asset from "./Asset.js";
+import Vendor from "./Vendor.js";
+import PurchaseOrder from "./PurchaseOrder.js";
+import PurchaseOrderItem from "./PurchaseOrderItem.js";
+import Project from "./Project.js";
+import ProjectMember from "./ProjectMember.js";
+import Task from "./Task.js";
+import Ticket from "./Ticket.js";
+import TicketReply from "./TicketReply.js";
+import AuditLog from "./AuditLog.js";
+import Role from "./Role.js";
+import OTP from "./OTP.js";
 
 // ── Company ───────────────────────────────────────────────
-Company.hasMany(Company, { as: 'children', foreignKey: 'parentId' })
-Company.belongsTo(Company, { as: 'parent', foreignKey: 'parentId' })
+Company.hasMany(Company, { as: "children", foreignKey: "parentId" });
+Company.belongsTo(Company, { as: "parent", foreignKey: "parentId" });
 
 // ── User <-> Company (many-to-many, was User.companies: [ObjectId]) ──
-User.belongsToMany(Company, { through: UserCompany, foreignKey: 'userId', otherKey: 'companyId', as: 'companies' })
-Company.belongsToMany(User, { through: UserCompany, foreignKey: 'companyId', otherKey: 'userId', as: 'users' })
-User.belongsTo(Company, { as: 'company', foreignKey: 'companyId' }) // home company
+User.belongsToMany(Company, {
+  through: UserCompany,
+  foreignKey: "userId",
+  otherKey: "companyId",
+  as: "companies",
+});
+Company.belongsToMany(User, {
+  through: UserCompany,
+  foreignKey: "companyId",
+  otherKey: "userId",
+  as: "users",
+});
+User.belongsTo(Company, { as: "company", foreignKey: "companyId" }); // home company
 // ── Role ───────────────────────────────────────────────
 
 Role.belongsTo(Company, {
-  foreignKey: 'companyId',
-})
+  foreignKey: "companyId",
+});
 
 Company.hasMany(Role, {
-  foreignKey: 'companyId',
-})
+  foreignKey: "companyId",
+});
 
 Role.hasMany(User, {
-  foreignKey: 'roleId',
-})
+  foreignKey: "roleId",
+});
 
 User.belongsTo(Role, {
-  as: 'roleInfo',
-  foreignKey: 'roleId',
+  as: "roleInfo",
+  foreignKey: "roleId",
+});
+
+// Company → Meetings
+Company.hasMany(Meeting, {
+  foreignKey: 'companyId',
+  as: 'meetings',
 })
+
+Meeting.belongsTo(Company, {
+  foreignKey: 'companyId',
+  as: 'company',
+})
+
+// User → Organized Meetings
+User.hasMany(Meeting, {
+  foreignKey: 'organizerId',
+  as: 'organizedMeetings',
+})
+
+Meeting.belongsTo(User, {
+  foreignKey: 'organizerId',
+  as: 'organizer',
+})
+
+
+
+
 // ── Account ───────────────────────────────────────────────
-Account.belongsTo(Company, { foreignKey: 'companyId' })
-Account.belongsTo(User, { as: 'assignedTo', foreignKey: 'assignedToId' })
-Account.hasMany(Contact, { as: 'contacts', foreignKey: 'accountId' })
-Account.hasMany(Opportunity, { as: 'opportunities', foreignKey: 'accountId' })
+Account.belongsTo(Company, { foreignKey: "companyId" });
+Account.belongsTo(User, { as: "assignedTo", foreignKey: "assignedToId" });
+Account.hasMany(Contact, { as: "contacts", foreignKey: "accountId" });
+Account.hasMany(Opportunity, { as: "opportunities", foreignKey: "accountId" });
 
 // ── Contact ───────────────────────────────────────────────
-Contact.belongsTo(Company, { foreignKey: 'companyId' })
-Contact.belongsTo(Account, { as: 'account', foreignKey: 'accountId' })
-Contact.belongsTo(User, { as: 'assignedTo', foreignKey: 'assignedToId' })
+Contact.belongsTo(Company, { foreignKey: "companyId" });
+Contact.belongsTo(Account, { as: "account", foreignKey: "accountId" });
+Contact.belongsTo(User, { as: "assignedTo", foreignKey: "assignedToId" });
 
 // ── Opportunity ───────────────────────────────────────────
-Opportunity.belongsTo(Company, { foreignKey: 'companyId' })
-Opportunity.belongsTo(Account, { as: 'account', foreignKey: 'accountId' })
-Opportunity.belongsTo(User, { as: 'assignedTo', foreignKey: 'assignedToId' })
+Opportunity.belongsTo(Company, { foreignKey: "companyId" });
+Opportunity.belongsTo(Account, { as: "account", foreignKey: "accountId" });
+Opportunity.belongsTo(User, { as: "assignedTo", foreignKey: "assignedToId" });
 
 // ── Lead ──────────────────────────────────────────────────
 Lead.belongsTo(Company, {
-  as: 'company',
-  foreignKey: 'companyId'
-})
-Lead.belongsTo(User, { as: 'assignedTo', foreignKey: 'assignedToId' })
-Lead.belongsTo(Account, { as: 'convertedAccount', foreignKey: 'convertedAccountId' })
-Lead.belongsTo(Contact, { as: 'convertedContact', foreignKey: 'convertedContactId' })
-Lead.belongsTo(Opportunity, { as: 'convertedOpportunity', foreignKey: 'convertedOpportunityId' })
-Lead.hasMany(LeadNote, { as: 'notes', foreignKey: 'leadId' })
-LeadNote.belongsTo(Lead, { foreignKey: 'leadId' })
-LeadNote.belongsTo(User, { as: 'createdBy', foreignKey: 'createdById' })
+  as: "company",
+  foreignKey: "companyId",
+});
+Lead.belongsTo(User, { as: "assignedTo", foreignKey: "assignedToId" });
+Lead.belongsTo(Account, {
+  as: "convertedAccount",
+  foreignKey: "convertedAccountId",
+});
+Lead.belongsTo(Contact, {
+  as: "convertedContact",
+  foreignKey: "convertedContactId",
+});
+Lead.belongsTo(Opportunity, {
+  as: "convertedOpportunity",
+  foreignKey: "convertedOpportunityId",
+});
+Lead.hasMany(LeadNote, { as: "notes", foreignKey: "leadId" });
+LeadNote.belongsTo(Lead, { foreignKey: "leadId" });
+LeadNote.belongsTo(User, { as: "createdBy", foreignKey: "createdById" });
 
 // ── Employee ──────────────────────────────────────────────
-Employee.belongsTo(Company, { foreignKey: 'companyId' })
-Employee.belongsTo(User, { as: 'user', foreignKey: 'userId' })
-Employee.hasMany(EmployeeDocument, { as: 'documents', foreignKey: 'employeeId' })
-EmployeeDocument.belongsTo(Employee, { foreignKey: 'employeeId' })
-Employee.hasMany(Payslip, { as: 'payslips', foreignKey: 'employeeId' })
-Employee.hasMany(Leave, { as: 'leaves', foreignKey: 'employeeId' })
-Employee.hasMany(Attendance, { as: 'attendanceRecords', foreignKey: 'employeeId' })
-Employee.hasMany(Asset, { as: 'assets', foreignKey: 'assignedToId' })
+Employee.belongsTo(Company, { foreignKey: "companyId" });
+Employee.belongsTo(User, { as: "user", foreignKey: "userId" });
+Employee.hasMany(EmployeeDocument, {
+  as: "documents",
+  foreignKey: "employeeId",
+});
+EmployeeDocument.belongsTo(Employee, { foreignKey: "employeeId" });
+Employee.hasMany(Payslip, { as: "payslips", foreignKey: "employeeId" });
+Employee.hasMany(Leave, { as: "leaves", foreignKey: "employeeId" });
+Employee.hasMany(Attendance, {
+  as: "attendanceRecords",
+  foreignKey: "employeeId",
+});
+Employee.hasMany(Asset, { as: "assets", foreignKey: "assignedToId" });
+//Meeting
+Meeting.hasMany(MeetingAttendee, {
+  foreignKey: "meetingId",
+  as: "attendees",
+});
+
+MeetingAttendee.belongsTo(Meeting, {
+  foreignKey: "meetingId",
+  as:"meeting"
+});
+
+User.hasMany(MeetingAttendee, {
+  foreignKey: "userId",
+   as:"meetingInvitations"
+});
+
+MeetingAttendee.belongsTo(User, {
+  foreignKey: "userId",
+  as: "user",
+});
 
 // ── Attendance ────────────────────────────────────────────
-Attendance.belongsTo(Company, { foreignKey: 'companyId' })
-Attendance.belongsTo(Employee, { as: 'employee', foreignKey: 'employeeId' })
+Attendance.belongsTo(Company, { foreignKey: "companyId" });
+Attendance.belongsTo(Employee, { as: "employee", foreignKey: "employeeId" });
 
 // ── Leave / LeaveType ─────────────────────────────────────
-Leave.belongsTo(Company, { foreignKey: 'companyId' })
-Leave.belongsTo(Employee, { as: 'employee', foreignKey: 'employeeId' })
-Leave.belongsTo(User, { as: 'approvedBy', foreignKey: 'approvedById' })
-LeaveType.belongsTo(Company, { foreignKey: 'companyId' })
+Leave.belongsTo(Company, { foreignKey: "companyId" });
+Leave.belongsTo(Employee, { as: "employee", foreignKey: "employeeId" });
+Leave.belongsTo(User, { as: "approvedBy", foreignKey: "approvedById" });
+LeaveType.belongsTo(Company, { foreignKey: "companyId" });
 
 // ── Payroll ───────────────────────────────────────────────
-PayrollRun.belongsTo(Company, { foreignKey: 'companyId' })
-PayrollRun.belongsTo(User, { as: 'processedBy', foreignKey: 'processedById' })
-PayrollRun.belongsTo(User, { as: 'approvedBy', foreignKey: 'approvedById' })
-PayrollRun.hasMany(Payslip, { as: 'payslips', foreignKey: 'payrollRunId' })
-Payslip.belongsTo(Company, { foreignKey: 'companyId' })
-Payslip.belongsTo(Employee, { as: 'employee', foreignKey: 'employeeId' })
-Payslip.belongsTo(PayrollRun, { as: 'payrollRun', foreignKey: 'payrollRunId' })
+PayrollRun.belongsTo(Company, { foreignKey: "companyId" });
+PayrollRun.belongsTo(User, { as: "processedBy", foreignKey: "processedById" });
+PayrollRun.belongsTo(User, { as: "approvedBy", foreignKey: "approvedById" });
+PayrollRun.hasMany(Payslip, { as: "payslips", foreignKey: "payrollRunId" });
+Payslip.belongsTo(Company, { foreignKey: "companyId" });
+Payslip.belongsTo(Employee, { as: "employee", foreignKey: "employeeId" });
+Payslip.belongsTo(PayrollRun, { as: "payrollRun", foreignKey: "payrollRunId" });
 
 // ── Finance ───────────────────────────────────────────────
-Expense.belongsTo(Company, { foreignKey: 'companyId' })
-Expense.belongsTo(User, { as: 'submittedBy', foreignKey: 'submittedById' })
-Expense.belongsTo(User, { as: 'approvedBy', foreignKey: 'approvedById' })
-LedgerEntry.belongsTo(Company, { foreignKey: 'companyId' })
-LedgerEntry.belongsTo(User, { as: 'createdBy', foreignKey: 'createdById' })
+Expense.belongsTo(Company, { foreignKey: "companyId" });
+Expense.belongsTo(User, { as: "submittedBy", foreignKey: "submittedById" });
+Expense.belongsTo(User, { as: "approvedBy", foreignKey: "approvedById" });
+LedgerEntry.belongsTo(Company, { foreignKey: "companyId" });
+LedgerEntry.belongsTo(User, { as: "createdBy", foreignKey: "createdById" });
 
 // ── Inventory ─────────────────────────────────────────────
-Warehouse.belongsTo(Company, { foreignKey: 'companyId' })
-Warehouse.belongsTo(Employee, { as: 'manager', foreignKey: 'managerId' })
-InventoryItem.belongsTo(Company, { foreignKey: 'companyId' })
-InventoryItem.belongsTo(Warehouse, { as: 'warehouse', foreignKey: 'warehouseId' })
-Asset.belongsTo(Company, { foreignKey: 'companyId' })
-Asset.belongsTo(Employee, { as: 'assignedTo', foreignKey: 'assignedToId' })
+Warehouse.belongsTo(Company, { foreignKey: "companyId" });
+Warehouse.belongsTo(Employee, { as: "manager", foreignKey: "managerId" });
+InventoryItem.belongsTo(Company, { foreignKey: "companyId" });
+InventoryItem.belongsTo(Warehouse, {
+  as: "warehouse",
+  foreignKey: "warehouseId",
+});
+Asset.belongsTo(Company, { foreignKey: "companyId" });
+Asset.belongsTo(Employee, { as: "assignedTo", foreignKey: "assignedToId" });
 
 // ── Procurement ───────────────────────────────────────────
-Vendor.belongsTo(Company, { foreignKey: 'companyId' })
-PurchaseOrder.belongsTo(Company, { foreignKey: 'companyId' })
-PurchaseOrder.belongsTo(Vendor, { as: 'vendor', foreignKey: 'vendorId' })
-PurchaseOrder.belongsTo(User, { as: 'createdBy', foreignKey: 'createdById' })
-PurchaseOrder.belongsTo(User, { as: 'approvedBy', foreignKey: 'approvedById' })
-PurchaseOrder.hasMany(PurchaseOrderItem, { as: 'items', foreignKey: 'purchaseOrderId' })
-PurchaseOrderItem.belongsTo(PurchaseOrder, { foreignKey: 'purchaseOrderId' })
+Vendor.belongsTo(Company, { foreignKey: "companyId" });
+PurchaseOrder.belongsTo(Company, { foreignKey: "companyId" });
+PurchaseOrder.belongsTo(Vendor, { as: "vendor", foreignKey: "vendorId" });
+PurchaseOrder.belongsTo(User, { as: "createdBy", foreignKey: "createdById" });
+PurchaseOrder.belongsTo(User, { as: "approvedBy", foreignKey: "approvedById" });
+PurchaseOrder.hasMany(PurchaseOrderItem, {
+  as: "items",
+  foreignKey: "purchaseOrderId",
+});
+PurchaseOrderItem.belongsTo(PurchaseOrder, { foreignKey: "purchaseOrderId" });
 
 // ── Projects ──────────────────────────────────────────────
-Project.belongsTo(Company, { foreignKey: 'companyId' })
-Project.belongsTo(User, { as: 'manager', foreignKey: 'managerId' })
-Project.hasMany(ProjectMember, { as: 'members', foreignKey: 'projectId' })
-Project.hasMany(Task, { as: 'tasks', foreignKey: 'projectId' })
-ProjectMember.belongsTo(Project, { foreignKey: 'projectId' })
-ProjectMember.belongsTo(User, { as: 'user', foreignKey: 'userId' })
-Task.belongsTo(Company, { foreignKey: 'companyId' })
-Task.belongsTo(Project, { as: 'project', foreignKey: 'projectId' })
-Task.belongsTo(User, { as: 'assignedTo', foreignKey: 'assignedToId' })
+Project.belongsTo(Company, { foreignKey: "companyId" });
+Project.belongsTo(User, { as: "manager", foreignKey: "managerId" });
+Project.hasMany(ProjectMember, { as: "members", foreignKey: "projectId" });
+Project.hasMany(Task, { as: "tasks", foreignKey: "projectId" });
+ProjectMember.belongsTo(Project, { foreignKey: "projectId" });
+ProjectMember.belongsTo(User, { as: "user", foreignKey: "userId" });
+Task.belongsTo(Company, { foreignKey: "companyId" });
+Task.belongsTo(Project, { as: "project", foreignKey: "projectId" });
+Task.belongsTo(User, { as: "assignedTo", foreignKey: "assignedToId" });
 
 // ── Support ───────────────────────────────────────────────
-Ticket.belongsTo(Company, { foreignKey: 'companyId' })
-Ticket.belongsTo(User, { as: 'assignedTo', foreignKey: 'assignedToId' })
-Ticket.belongsTo(User, { as: 'createdBy', foreignKey: 'createdById' })
-Ticket.hasMany(TicketReply, { as: 'replies', foreignKey: 'ticketId' })
-TicketReply.belongsTo(Ticket, { foreignKey: 'ticketId' })
-TicketReply.belongsTo(User, { as: 'author', foreignKey: 'authorId' })
+Ticket.belongsTo(Company, { foreignKey: "companyId" });
+Ticket.belongsTo(User, { as: "assignedTo", foreignKey: "assignedToId" });
+Ticket.belongsTo(User, { as: "createdBy", foreignKey: "createdById" });
+Ticket.hasMany(TicketReply, { as: "replies", foreignKey: "ticketId" });
+TicketReply.belongsTo(Ticket, { foreignKey: "ticketId" });
+TicketReply.belongsTo(User, { as: "author", foreignKey: "authorId" });
 
 // ── Audit ─────────────────────────────────────────────────
-AuditLog.belongsTo(Company, { foreignKey: 'companyId' })
-AuditLog.belongsTo(User, { as: 'user', foreignKey: 'userId' })
+AuditLog.belongsTo(Company, { foreignKey: "companyId" });
+AuditLog.belongsTo(User, { as: "user", foreignKey: "userId" });
 
 // Make every model emit `_id` (aliasing the real `id`) in its JSON output,
 // so the existing React frontend — which expects Mongo-style `_id` in 22+
 // places — keeps working without any client-side changes.
-import { withMongoCompatJSON } from './mongoCompat.js'
-
+import { withMongoCompatJSON } from "./mongoCompat.js";
+import PasswordResetToken from "./PasswordResetToken.js";
 const allModels = [
-  Company, User, UserCompany,Role, Account, Contact, Opportunity, Lead, LeadNote,
-  Employee, EmployeeDocument, Attendance, Leave, LeaveType, PayrollRun, Payslip,
-  Expense, LedgerEntry, Warehouse, InventoryItem, Asset, Vendor, PurchaseOrder,
-  PurchaseOrderItem, Project, ProjectMember, Task, Ticket, TicketReply, AuditLog,
-]
-allModels.forEach(withMongoCompatJSON)
+  Company,
+  User,
+  UserCompany,
+  Role,
+  Account,
+  Contact,
+  Opportunity,
+  Lead,
+  LeadNote,
+  Employee,
+  Meeting,
+   MeetingAttendee,
+  EmployeeDocument,
+  Attendance,
+  Leave,
+  LeaveType,
+  PayrollRun,
+  Payslip,
+  Expense,
+  LedgerEntry,
+  Warehouse,
+  InventoryItem,
+  Asset,
+  Vendor,
+  PurchaseOrder,
+  PurchaseOrderItem,
+  Project,
+  ProjectMember,
+  Task,
+  Ticket,
+  TicketReply,
+  AuditLog,
+  OTP,
+  PasswordResetToken,
+];
+allModels.forEach(withMongoCompatJSON);
 
 export {
-  Company, User, UserCompany,Role, Account, Contact, Opportunity, Lead, LeadNote,
-  Employee, EmployeeDocument, Attendance, Leave, LeaveType, PayrollRun, Payslip,
-  Expense, LedgerEntry, Warehouse, InventoryItem, Asset, Vendor, PurchaseOrder,
-  PurchaseOrderItem, Project, ProjectMember, Task, Ticket, TicketReply, AuditLog,
-}
+  Company,
+  User,
+  UserCompany,
+  Role,
+  Account,
+  Meeting,
+   MeetingAttendee,
+  Contact,
+  Opportunity,
+  Lead,
+  LeadNote,
+  Employee,
+  EmployeeDocument,
+  Attendance,
+  Leave,
+  LeaveType,
+  PayrollRun,
+  Payslip,
+  Expense,
+  LedgerEntry,
+  Warehouse,
+  InventoryItem,
+  Asset,
+  Vendor,
+  PurchaseOrder,
+  PurchaseOrderItem,
+  Project,
+  ProjectMember,
+  Task,
+  Ticket,
+  TicketReply,
+  AuditLog,
+  OTP,
+  PasswordResetToken,
+};

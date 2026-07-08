@@ -45,6 +45,10 @@ User.init(
 
     phone: { type: DataTypes.STRING },
     isActive: { type: DataTypes.BOOLEAN, defaultValue: true },
+    isVerified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
     companyId: { type: DataTypes.UUID, allowNull: true }, // primary/home company
     lastLogin: { type: DataTypes.DATE },
   },

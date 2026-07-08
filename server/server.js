@@ -25,7 +25,8 @@ import rolesRoutes from './routes/roles.routes.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import { protect } from './middleware/auth.js'
 import { resolveCompany } from './middleware/tenant.js'
-
+import meetingsRoutes from "./routes/meetings.routes.js";
+import meetingAttendeeRoutes from "./routes/meetingAttendees.routes.js";
 dotenv.config()
 
 const app = express()
@@ -34,6 +35,8 @@ app.use(cors())
 app.use(express.json())
 
 app.use('/api/auth', authRoutes)
+app.use('/api/meetings', meetingsRoutes)
+app.use("/api/meeting-attendees", meetingAttendeeRoutes)
 app.use('/api/leads', protect, resolveCompany, leadsRoutes)
 app.use('/api/accounts', protect, resolveCompany, accountsRoutes)
 app.use('/api/contacts', protect, resolveCompany, contactsRoutes)

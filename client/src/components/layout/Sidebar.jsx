@@ -23,6 +23,20 @@ const NAV = [
     ]
   },
   {
+  label: "Calendar & Meetings",
+  icon: Calendar,
+  children: [
+    {
+      label: "Calendar",
+      to: "/calendar",
+    },
+    {
+      label: "Meetings",
+      to: "/calendar/meetings",
+    },
+  ],
+},
+  {
     label: 'Human Resources', icon: Users, children: [
       { label: 'Employees', to: '/hr/employees' },
       { label: 'Attendance', to: '/hr/attendance' },
