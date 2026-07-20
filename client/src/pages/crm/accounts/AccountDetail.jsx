@@ -15,6 +15,7 @@ import { formatCurrency } from '@/lib/utils'
 // CRM and follows light/dark mode automatically.
 function Field({ label, value, icon, href }) {
   const content = value || '-'
+
   return (
     <div className="min-w-0">
       <span
@@ -24,18 +25,22 @@ function Field({ label, value, icon, href }) {
         {icon}
         {label}
       </span>
+
       {href && value ? (
-        
+        <a
           href={href}
           target="_blank"
-          rel="noreferrer"
+          rel="noopener noreferrer"
           className="text-[13px] font-semibold break-words hover:underline block mt-1"
           style={{ color: 'var(--primary)' }}
         >
           {content}
         </a>
       ) : (
-        <p className="text-[13px] font-semibold break-words mt-1" style={{ color: 'var(--text-primary)' }}>
+        <p
+          className="text-[13px] font-semibold break-words mt-1"
+          style={{ color: 'var(--text-primary)' }}
+        >
           {content}
         </p>
       )}
