@@ -81,7 +81,7 @@ export default function Analytics() {
   const [year, setYear] = useState(currentYear);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["dashboard-stats"],
+    queryKey: ["reports-dashboard-stats"],
     queryFn: () => reportsAPI.getDashboardStats().then((res) => res.data),
   });
 

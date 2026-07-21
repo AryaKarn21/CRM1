@@ -1,15 +1,16 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 // CORRECT — valid names in lucide-react v1
 import {
   LayoutDashboard, Users, CircleUser, Briefcase, TrendingUp,
   UserCheck, Clock, Calendar, DollarSign, Wallet, Receipt,
   Package, ShoppingCart, FolderKanban, Headphones,
-  BarChart3, Settings, ChevronDown, ChevronRight, Building2, Menu
+  BarChart3, Settings, ChevronDown, ChevronRight, Building2, Menu, X
 } from 'lucide-react'
 import { useUIStore } from '@/store/ui.store'
 import { useAuthStore } from '@/store/auth.store'
 import { cn, getInitials } from '@/lib/utils'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import CompanySwitcher from './CompanySwitcher'
 
 const NAV = [
@@ -68,23 +69,6 @@ const NAV = [
   { label: 'Settings', icon: Settings, to: '/settings' },
 ]
 
-// Employees must not reach the company-wide directory — swap the
-// "Employees" link for a self-service "My Profile" link for that role.
-function buildNav(role) {
-  return NAV.map((item) => {
-    if (item.label !== 'Human Resources') return item
-    if (role === 'employee') {
-      return {
-        ...item,
-        children: item.children.map((c) =>
-          c.label === 'Employees' ? { label: 'My Profile', to: '/hr/my-profile' } : c
-        ),
-      }
-    }
-    return item
-  })
-}
-
 function NavGroup({ item, collapsed }) {
   const location = useLocation()
   const isActive = item.children?.some(c => location.pathname.startsWith(c.to))
@@ -132,68 +116,111 @@ function NavGroup({ item, collapsed }) {
 }
 
 export default function Sidebar() {
-  const { sidebarCollapsed, toggleSidebar } = useUIStore()
+  const { sidebarCollapsed, toggleSidebar, mobileSidebarOpen, closeMobileSidebar, toggleMobileSidebar } = useUIStore()
   const { user } = useAuthStore()
-  const navItems = buildNav(user?.role)
+  const isMobile = useIsMobile()
+  const location = useLocation()
+
+  // Close the drawer on every navigation instead of leaving it open over
+  // the new page — the previous version had no mobile awareness at all,
+  // so it never closed (or opened) for any route change.
+  useEffect(() => {
+    if (isMobile) closeMobileSidebar()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, isMobile])
+
+  // On mobile the sidebar is a full-width-ish overlay drawer, not a
+  // permanent column: it always renders expanded (icon-only collapse is
+  // a desktop-only affordance) and slides in/out instead of resizing.
+  const collapsed = isMobile ? false : sidebarCollapsed
 
   return (
-    <aside
-      className="fixed left-0 top-0 h-screen flex flex-col transition-all duration-300 z-30 overflow-hidden"
-      style={{
-        width: sidebarCollapsed ? 'var(--sidebar-collapsed-width)' : 'var(--sidebar-width)',
-        background: 'var(--sidebar-bg)',
-      }}
-    >
-      {/* Logo / Brand */}
-      <div className="flex items-center gap-3 px-4 h-14 border-b border-white/10 flex-shrink-0">
-        <div className="w-8 h-8 rounded-lg bg-[var(--primary)] flex items-center justify-center flex-shrink-0">
-          <Building2 size={16} className="text-white" />
-        </div>
-        {!sidebarCollapsed && (
-          <div className="overflow-hidden">
-            <p className="text-white text-[13px] font-700 leading-tight truncate">OS Group CRM</p>
-            <p className="text-[var(--sidebar-text)] text-[10px] truncate">Enterprise Platform</p>
-          </div>
-        )}
+    <>
+      {/* Floating hamburger trigger — mobile only. Topbar already reserves
+          left padding for this so they never overlap. */}
+      {isMobile && (
         <button
-          onClick={toggleSidebar}
-          className="ml-auto text-[var(--sidebar-text)] hover:text-white transition-colors p-1 rounded flex-shrink-0"
+          onClick={toggleMobileSidebar}
+          aria-label={mobileSidebarOpen ? 'Close menu' : 'Open menu'}
+          className="fixed top-2.5 left-3 z-40 w-9 h-9 rounded-lg flex items-center justify-center shadow-sm"
+          style={{ background: 'var(--sidebar-bg)', color: '#fff' }}
         >
-          <Menu size={15} />
+          {mobileSidebarOpen ? <X size={17} /> : <Menu size={17} />}
         </button>
-      </div>
+      )}
 
-      {/* Company Switcher */}
-      {!sidebarCollapsed && <CompanySwitcher />}
+      {/* Backdrop — click to dismiss */}
+      {isMobile && mobileSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-20 animate-fade-in"
+          onClick={closeMobileSidebar}
+          aria-hidden="true"
+        />
+      )}
 
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-2 py-3 flex flex-col gap-0.5 scrollbar-none">
-        {navItems.map((item) =>
-          item.children ? (
-            <NavGroup key={item.label} item={item} collapsed={sidebarCollapsed} />
-          ) : (
-            <NavLink key={item.to} to={item.to} end={item.to === '/'}
-              className={({ isActive }) => cn('nav-item', isActive && 'active', sidebarCollapsed && 'justify-center')}
-            >
-              <item.icon className="nav-icon" />
-              {!sidebarCollapsed && <span>{item.label}</span>}
-            </NavLink>
-          )
-        )}
-      </nav>
-
-      {/* User footer */}
-      <div className={cn('border-t border-white/10 p-3 flex items-center gap-3', sidebarCollapsed && 'justify-center')}>
-        <div className="w-8 h-8 rounded-full bg-[var(--primary)] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-          {getInitials(user?.name || 'U')}
-        </div>
-        {!sidebarCollapsed && (
-          <div className="overflow-hidden">
-            <p className="text-white text-[12px] font-medium truncate">{user?.name}</p>
-            <p className="text-[var(--sidebar-text)] text-[11px] truncate capitalize">{user?.role?.replace('_', ' ')}</p>
+      <aside
+        className="fixed left-0 top-0 h-screen flex flex-col transition-transform duration-300 z-30 overflow-hidden"
+        style={{
+          width: isMobile ? 'min(80vw, var(--sidebar-width))' : (collapsed ? 'var(--sidebar-collapsed-width)' : 'var(--sidebar-width)'),
+          background: 'var(--sidebar-bg)',
+          transform: isMobile && !mobileSidebarOpen ? 'translateX(-100%)' : 'translateX(0)',
+          transition: isMobile ? 'transform 0.25s ease' : 'width 0.3s ease',
+        }}
+      >
+        {/* Logo / Brand */}
+        <div className="flex items-center gap-3 px-4 h-14 border-b border-white/10 flex-shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-[var(--primary)] flex items-center justify-center flex-shrink-0">
+            <Building2 size={16} className="text-white" />
           </div>
-        )}
-      </div>
-    </aside>
+          {!collapsed && (
+            <div className="overflow-hidden">
+              <p className="text-white text-[13px] font-700 leading-tight truncate">OS Group CRM</p>
+              <p className="text-[var(--sidebar-text)] text-[10px] truncate">Enterprise Platform</p>
+            </div>
+          )}
+          {!isMobile && (
+            <button
+              onClick={toggleSidebar}
+              className="ml-auto text-[var(--sidebar-text)] hover:text-white transition-colors p-1 rounded flex-shrink-0"
+              aria-label="Toggle sidebar width"
+            >
+              <Menu size={15} />
+            </button>
+          )}
+        </div>
+
+        {/* Company Switcher */}
+        {!collapsed && <CompanySwitcher />}
+
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto px-2 py-3 flex flex-col gap-0.5 scrollbar-none">
+          {NAV.map((item) =>
+            item.children ? (
+              <NavGroup key={item.label} item={item} collapsed={collapsed} />
+            ) : (
+              <NavLink key={item.to} to={item.to} end={item.to === '/'}
+                className={({ isActive }) => cn('nav-item', isActive && 'active', collapsed && 'justify-center')}
+              >
+                <item.icon className="nav-icon" />
+                {!collapsed && <span>{item.label}</span>}
+              </NavLink>
+            )
+          )}
+        </nav>
+
+        {/* User footer */}
+        <div className={cn('border-t border-white/10 p-3 flex items-center gap-3', collapsed && 'justify-center')}>
+          <div className="w-8 h-8 rounded-full bg-[var(--primary)] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+            {getInitials(user?.name || 'U')}
+          </div>
+          {!collapsed && (
+            <div className="overflow-hidden">
+              <p className="text-white text-[12px] font-medium truncate">{user?.name}</p>
+              <p className="text-[var(--sidebar-text)] text-[11px] truncate capitalize">{user?.role?.replace('_', ' ')}</p>
+            </div>
+          )}
+        </div>
+      </aside>
+    </>
   )
 }

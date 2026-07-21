@@ -134,7 +134,7 @@ export default function StockAdjustments() {
 
   return (
     <div className="animate-fade-in">
-      <div className="page-header">
+      <div className="page-header flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-6 py-4">
         <div>
           <h1
             className="text-[18px] font-bold"
@@ -152,7 +152,7 @@ export default function StockAdjustments() {
         </div>
 
         <button
-          className="btn btn-primary"
+          className="btn btn-primary w-full sm:w-auto justify-center"
           onClick={() => setModalOpen(true)}
         >
           <Plus size={15} />
@@ -171,7 +171,7 @@ export default function StockAdjustments() {
         }
       />
 
-      <div className="mx-6 mb-6 card overflow-hidden">
+      <div className="mx-3 sm:mx-6 mb-6 card overflow-hidden">
         <DataTable
           columns={columns}
           data={adjustments}
@@ -183,6 +183,23 @@ export default function StockAdjustments() {
           onPageChange={() => {}}
           emptyTitle="No Adjustments"
           emptyDescription="Create your first stock adjustment."
+          mobileCard={(row) => (
+            <div>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>
+                  {row.adjustmentNo}
+                </p>
+                <Badge variant={row.type === "Increase" ? "success" : "danger"}>{row.type}</Badge>
+              </div>
+              <p className="text-[12px] mt-0.5" style={{ color: "var(--text-secondary)" }}>
+                {row.item?.name || "—"} · {row.warehouse?.name || "—"}
+              </p>
+              <div className="flex items-center justify-between mt-1.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
+                <span>{row.reason || "—"} · Qty {row.quantity}</span>
+                <span>{row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "—"}</span>
+              </div>
+            </div>
+          )}
         />
       </div>
 
@@ -199,7 +216,7 @@ export default function StockAdjustments() {
           createMutation.mutate(formData)
         )}
       >
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="form-group col-span-2">
             <label className="form-label">Inventory Item *</label>
 

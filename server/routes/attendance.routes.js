@@ -7,6 +7,7 @@ import { createNotification } from "../services/notification.service.js";
 const router = express.Router();
 
 const getCompany = (req) => req.companyId;
+
 router.get("/", protect, async (req, res, next) => {
   try {
     const companyId = getCompany(req);
@@ -165,7 +166,11 @@ router.post("/checkin", protect, async (req, res, next) => {
   }
 });
 
-router.patch("/:id/checkout", protect, async (req, res, next) => {
+// ─────────────────────────────────────────────────────────────
+// CHECK OUT — closes today's open attendance record for an employee,
+// computes hours worked / overtime, and derives a status.
+// ─────────────────────────────────────────────────────────────
+router.post("/checkout", protect, async (req, res, next) => {
   try {
     const companyId = getCompany(req);
 
@@ -175,23 +180,54 @@ router.patch("/:id/checkout", protect, async (req, res, next) => {
       });
     }
 
-    const record = await Attendance.findByPk(req.params.id);
-
-    if (!record) {
-      return res.status(404).json({
-        message: "Record not found",
-      });
+    const employee = await Employee.findByPk(req.body.employeeId);
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found" });
     }
 
-    const employee = await Employee.findByPk(record.employeeId);
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+
+    const record = await Attendance.findOne({
+      where: {
+        employeeId: req.body.employeeId,
+        companyId,
+        date: { [Op.between]: [start, end] },
+      },
+    });
+
+    if (!record) {
+      return res.status(404).json({ message: "No check-in found for today" });
+    }
+    if (record.checkOut) {
+      return res.status(400).json({ message: "Employee has already checked out today." });
+    }
+
+    const shift = record.shiftId ? await Shift.findByPk(record.shiftId) : null;
 
     const checkOut = new Date();
+    const hours = (checkOut - new Date(record.checkIn)) / (1000 * 60 * 60);
+    const hoursWorked = Math.round(hours * 100) / 100;
 
-    const hours = (checkOut - record.checkIn) / (1000 * 60 * 60);
+    // Standard 8-hour workday unless the assigned shift says otherwise.
+    const expectedHours = shift?.durationHours || 8;
+    const overtimeHours = hoursWorked > expectedHours
+      ? Math.round((hoursWorked - expectedHours) * 100) / 100
+      : 0;
+
+    let status = record.status;
+    if (hoursWorked < expectedHours / 2) {
+      status = "half_day";
+    } else if (status !== "late") {
+      status = "present";
+    }
 
     record.checkOut = checkOut;
-    record.hoursWorked = Math.round(hours * 100) / 100;
-
+    record.hoursWorked = hoursWorked;
+    record.overtimeHours = overtimeHours;
+    record.status = status;
     await record.save();
 
     await createNotification({
@@ -234,19 +270,16 @@ router.patch("/:id", protect, async (req, res, next) => {
       });
     }
 
-    
-
     const { status, approvalStatus, checkIn, checkOut, notes, breakMinutes } = req.body;
-    let hoursWorked = null;
+    let hoursWorked = record.hoursWorked;
 
-if (checkIn && checkOut) {
-    hoursWorked =
+    if (checkIn && checkOut) {
+      hoursWorked =
         Math.round(
-            ((new Date(checkOut) - new Date(checkIn)) /
-                (1000 * 60 * 60)) *
-                100
+          ((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60)) * 100,
         ) / 100;
-}
+    }
+
     await record.update({
       status,
       approvalStatus,
@@ -255,10 +288,8 @@ if (checkIn && checkOut) {
       shiftId: req.body.shiftId,
       notes,
       breakMinutes,
-       hoursWorked,
+      hoursWorked,
     });
-
-    
 
     const employee = await Employee.findByPk(record.employeeId);
 

@@ -62,6 +62,7 @@ import {
 } from "./EmailModels.js";
 
 
+
 // ── Company ───────────────────────────────────────────────
 Company.hasMany(Company, { as: "children", foreignKey: "parentId" });
 Company.belongsTo(Company, { as: "parent", foreignKey: "parentId" });
@@ -222,21 +223,40 @@ Employee.hasMany(Employee, {
   foreignKey: "reportingManagerId",
 });
 
-// Employee -> Performance Reviews
+// ── Employee -> Performance Reviews ─────────────────────────
+
+// Employee being reviewed
 Employee.hasMany(PerformanceReview, {
   as: "performanceReviews",
   foreignKey: "employeeId",
 });
+
 PerformanceReview.belongsTo(Employee, {
   as: "employee",
   foreignKey: "employeeId",
 });
-PerformanceReview.belongsTo(Employee, {
+
+// Logged-in User who performs/submits the review
+User.hasMany(PerformanceReview, {
+  as: "performanceReviewsGiven",
+  foreignKey: "reviewerId",
+});
+
+PerformanceReview.belongsTo(User, {
   as: "reviewer",
   foreignKey: "reviewerId",
 });
-PerformanceReview.belongsTo(Company, { foreignKey: "companyId" });
+
+// Company
+PerformanceReview.belongsTo(Company, {
+  as: "company",
+  foreignKey: "companyId",
+});
+
+
 //Meeting
+
+
 Meeting.hasMany(MeetingAttendee, {
   foreignKey: "meetingId",
   as: "attendees",

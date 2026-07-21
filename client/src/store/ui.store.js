@@ -8,8 +8,17 @@ export const useUIStore = create(
       theme: 'light',
       commandPaletteOpen: false,
 
+      // Mobile off-canvas drawer open/closed. Deliberately NOT persisted —
+      // unlike sidebarCollapsed (a desktop icon-rail preference), this
+      // should always start closed on a fresh page load.
+      mobileSidebarOpen: false,
+
       toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setSidebarCollapsed: (val) => set({ sidebarCollapsed: val }),
+
+      openMobileSidebar: () => set({ mobileSidebarOpen: true }),
+      closeMobileSidebar: () => set({ mobileSidebarOpen: false }),
+      toggleMobileSidebar: () => set((s) => ({ mobileSidebarOpen: !s.mobileSidebarOpen })),
 
       toggleTheme: () =>
         set((s) => {

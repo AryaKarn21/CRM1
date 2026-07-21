@@ -1,5 +1,11 @@
-import { DataTypes, Model } from "sequelize";
-import { sequelize } from "../config/db.js";
+import {
+  DataTypes,
+  Model,
+} from "sequelize";
+
+import {
+  sequelize,
+} from "../config/db.js";
 
 class Opportunity extends Model {}
 
@@ -7,16 +13,35 @@ Opportunity.init(
   {
     id: {
       type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      defaultValue:
+        DataTypes.UUIDV4,
       primaryKey: true,
     },
-    companyId: { type: DataTypes.UUID, allowNull: true },
-    name: { type: DataTypes.STRING, allowNull: false },
-    accountId: { type: DataTypes.UUID, allowNull: true },
+
+    companyId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+    },
+
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+
+      validate: {
+        notEmpty: true,
+      },
+    },
+
+    accountId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+    },
+
     assignedToId: {
       type: DataTypes.UUID,
       allowNull: true,
     },
+
     stage: {
       type: DataTypes.ENUM(
         "Prospecting",
@@ -28,28 +53,71 @@ Opportunity.init(
         "Proposal/Price",
         "Negotiation/Review",
         "Closed Won",
-        "Closed Lost",
+        "Closed Lost"
       ),
-      defaultValue: "Prospecting",
+
+      allowNull: false,
+
+      defaultValue:
+        "Prospecting",
     },
-    value: { type: DataTypes.FLOAT, defaultValue: 0 },
+
+    value: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
+      defaultValue: 0,
+
+      validate: {
+        min: 0,
+      },
+    },
+
     probability: {
       type: DataTypes.INTEGER,
+      allowNull: false,
       defaultValue: 10,
-      validate: { min: 0, max: 100 },
+
+      validate: {
+        min: 0,
+        max: 100,
+      },
     },
-    closeDate: { type: DataTypes.DATE },
-    description: { type: DataTypes.TEXT },
-    assignedToId: { type: DataTypes.UUID, allowNull: true },
-    source: { type: DataTypes.STRING },
+
+    closeDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+
+    description: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+
+    source: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
     sequelize,
-    modelName: "Opportunity",
-    tableName: "opportunities",
+
+    modelName:
+      "Opportunity",
+
+    tableName:
+      "opportunities",
+
     timestamps: true,
-    indexes: [{ fields: ["companyId", "stage"] }],
-  },
+
+    indexes: [
+      {
+        fields: [
+          "companyId",
+          "stage",
+        ],
+      },
+    ],
+  }
 );
 
 export default Opportunity;

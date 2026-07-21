@@ -213,7 +213,7 @@ export default function ItemsList() {
 
   return (
     <div className="animate-fade-in">
-      <div className="page-header">
+      <div className="page-header flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-6 py-4">
         <div>
           <h1
             className="text-[18px] font-bold"
@@ -229,7 +229,7 @@ export default function ItemsList() {
           </p>
         </div>
         <button
-          className="btn btn-primary"
+          className="btn btn-primary w-full sm:w-auto justify-center"
           onClick={() => {
             setEditingItem(null);
             reset();
@@ -253,7 +253,7 @@ export default function ItemsList() {
         onChange={(k, v) => setParams((p) => ({ ...p, [k]: v, page: 1 }))}
       />
 
-      <div className="mx-6 mb-6 card overflow-hidden">
+      <div className="mx-3 sm:mx-6 mb-6 card overflow-hidden">
         <DataTable
           columns={columns}
           data={data?.items || []}
@@ -265,6 +265,70 @@ export default function ItemsList() {
           onPageChange={(page) => setParams((p) => ({ ...p, page }))}
           emptyTitle="No inventory items"
           emptyDescription="Add your first item to start tracking inventory"
+          mobileCard={(row) => (
+            <div className="flex items-start gap-3">
+              <div
+                className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: "var(--warning-bg)" }}
+              >
+                <Package size={15} style={{ color: "var(--warning)" }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[13px] font-semibold truncate" style={{ color: "var(--text-primary)" }}>
+                    {row.name}
+                  </p>
+                  <Badge variant="gray">{row.valuationMethod || "FIFO"}</Badge>
+                </div>
+                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                  {row.sku || "—"} · {row.category || "Uncategorized"}
+                </p>
+                <div className="flex items-center justify-between mt-1.5">
+                  <span
+                    className={`text-[12px] font-semibold ${row.quantity <= (row.reorderPoint || 0) ? "text-red-500" : ""}`}
+                    style={row.quantity > (row.reorderPoint || 0) ? { color: "var(--text-primary)" } : undefined}
+                  >
+                    {row.quantity ?? 0} {row.unit || "pcs"}
+                    {row.quantity <= (row.reorderPoint || 0) && " ⚠ Low"}
+                  </span>
+                  <span className="text-[12px] font-semibold" style={{ color: "var(--text-primary)" }}>
+                    {formatCurrency(row.unitPrice)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => {
+                      setEditingItem(row);
+                      reset({
+                        name: row.name,
+                        sku: row.sku,
+                        category: row.category,
+                        quantity: row.quantity,
+                        unit: row.unit,
+                        unitPrice: row.unitPrice,
+                        reorderPoint: row.reorderPoint,
+                        valuationMethod: row.valuationMethod,
+                        warehouseId: row.warehouseId || "",
+                        description: row.description,
+                      });
+                      setModalOpen(true);
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-sm text-red-500"
+                    onClick={() => {
+                      if (confirm("Delete item?")) deleteMutation.mutate(row.id);
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         />
       </div>
 
@@ -290,7 +354,7 @@ export default function ItemsList() {
         size="lg"
       >
         <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="form-group col-span-2">
               <label className="form-label">Item Name *</label>
               <input

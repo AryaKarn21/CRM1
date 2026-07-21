@@ -300,45 +300,146 @@ router.get("/:id", protect, async (req, res, next) => {
 // ═════════════════════════════════════════════════════════════
 // CREATE
 // ═════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════
+// CREATE EMPLOYEE
+// ═════════════════════════════════════════════════════════════
 router.post("/", protect, async (req, res, next) => {
   try {
     const company = getCompany(req);
 
+    if (!company) {
+      return res.status(400).json({
+        message: "Company is required before creating an employee.",
+      });
+    }
+
+    // Convert optional FK fields from "" to null
+    const shiftId =
+      typeof req.body.shiftId === "string" && req.body.shiftId.trim()
+        ? req.body.shiftId.trim()
+        : null;
+
+    const reportingManagerId =
+      typeof req.body.reportingManagerId === "string" &&
+      req.body.reportingManagerId.trim()
+        ? req.body.reportingManagerId.trim()
+        : null;
+
+    const userId =
+      typeof req.body.userId === "string" && req.body.userId.trim()
+        ? req.body.userId.trim()
+        : null;
+
+    // ---------------------------------------------------------
+    // Validate selected shift
+    // ---------------------------------------------------------
+    if (shiftId) {
+      const shift = await Shift.findOne({
+        where: {
+          id: shiftId,
+          companyId: company,
+        },
+      });
+
+      if (!shift) {
+        return res.status(400).json({
+          message: "Selected shift does not exist for this company.",
+          field: "shiftId",
+        });
+      }
+    }
+
+    // ---------------------------------------------------------
+    // Validate reporting manager
+    // ---------------------------------------------------------
+    if (reportingManagerId) {
+      const manager = await Employee.findOne({
+        where: {
+          id: reportingManagerId,
+          companyId: company,
+        },
+      });
+
+      if (!manager) {
+        return res.status(400).json({
+          message: "Selected reporting manager does not exist.",
+          field: "reportingManagerId",
+        });
+      }
+    }
+
+    // ---------------------------------------------------------
+    // Generate next Employee ID
+    // ---------------------------------------------------------
     const lastEmployee = await Employee.findOne({
       where: { companyId: company },
       order: [["createdAt", "DESC"]],
     });
 
     let employeeId = "EMP0001";
+
     if (lastEmployee?.employeeId) {
-      const lastNumber = parseInt(lastEmployee.employeeId.replace("EMP", ""), 10);
-      employeeId = `EMP${String(lastNumber + 1).padStart(4, "0")}`;
+      const match = String(lastEmployee.employeeId).match(/^EMP(\d+)$/);
+
+      if (match) {
+        const lastNumber = Number(match[1]);
+
+        employeeId = `EMP${String(lastNumber + 1).padStart(4, "0")}`;
+      }
     }
 
-    const employee = await Employee.create({
+    // ---------------------------------------------------------
+    // Create Employee
+    // ---------------------------------------------------------
+    const employeeData = {
       ...req.body,
+
       companyId: company,
       employeeId,
-    });
 
+      // IMPORTANT: use normalized FK values
+      shiftId,
+      reportingManagerId,
+      userId,
+    };
+
+    const employee = await Employee.create(employeeData);
+
+    // ---------------------------------------------------------
+    // Notification
+    // ---------------------------------------------------------
     await createNotification({
       companyId: employee.companyId,
       userId: req.user.id,
       senderId: req.user.id,
+
       module: "hr",
       type: "employee_created",
+
       title: "New Employee Added",
+
       message: `${employee.firstName} ${employee.lastName} has been added successfully.`,
+
       priority: "medium",
+
       actionUrl: `/hr/employees/${employee.id}`,
-      metadata: { employeeId: employee.id },
+
+      metadata: {
+        employeeId: employee.id,
+      },
     });
 
+    // ---------------------------------------------------------
+    // Audit log
+    // ---------------------------------------------------------
     await logEvent({
       companyId: employee.companyId,
       userId: req.user.id,
+
       action: "employee_created",
+
       resourceId: employee.id,
+
       changes: {
         employeeId: employee.employeeId,
         department: employee.department,
@@ -346,12 +447,20 @@ router.post("/", protect, async (req, res, next) => {
       },
     });
 
-    res.status(201).json(employee);
+    return res.status(201).json(employee);
   } catch (err) {
+    console.error("CREATE EMPLOYEE ERROR:", {
+      name: err.name,
+      message: err.message,
+      sqlMessage: err.parent?.sqlMessage,
+      detail: err.parent?.detail,
+      constraint: err.parent?.constraint,
+      fields: err.fields,
+    });
+
     next(err);
   }
 });
-
 // ═════════════════════════════════════════════════════════════
 // UPDATE
 // ═════════════════════════════════════════════════════════════

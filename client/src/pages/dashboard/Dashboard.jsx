@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Users, TrendingUp, DollarSign, Ticket, UserCheck, Package, RefreshCw } from 'lucide-react'
+import { Users, TrendingUp, DollarSign, Ticket, UserCheck, Package, RefreshCw, Trophy, Wallet } from 'lucide-react'
 import api from '@/api/axios'
 import { formatCurrency } from '@/lib/utils'
 import KpiCard from './components/Kpicard'
@@ -33,12 +33,18 @@ const useTopDeals = () => useQuery({
   queryFn: () => api.get('/dashboard/top-deals?limit=6').then(r => r.data),
 })
 
+const useWonDeals = () => useQuery({
+  queryKey: ['dashboard-won-deals'],
+  queryFn: () => api.get('/dashboard/top-deals?type=won&limit=6').then(r => r.data),
+})
+
 export default function Dashboard() {
   const queryClient = useQueryClient()
   const { data: stats, isLoading: statsLoading, isFetching: statsFetching } = useDashboardStats()
   const { data: activity, isLoading: activityLoading } = useRecentActivity()
   const { data: charts, isLoading: chartsLoading } = useDashboardCharts()
   const { data: topDeals, isLoading: dealsLoading } = useTopDeals()
+  const { data: wonDeals, isLoading: wonDealsLoading } = useWonDeals()
 
   const isRefreshing = statsFetching && !statsLoading
 
@@ -47,6 +53,7 @@ export default function Dashboard() {
     queryClient.invalidateQueries({ queryKey: ['dashboard-activity'] })
     queryClient.invalidateQueries({ queryKey: ['dashboard-charts'] })
     queryClient.invalidateQueries({ queryKey: ['dashboard-top-deals'] })
+    queryClient.invalidateQueries({ queryKey: ['dashboard-won-deals'] })
   }
 
   return (
@@ -75,9 +82,11 @@ export default function Dashboard() {
           <KpiCard delay={0} title="Total Leads" value={stats?.leads?.total ?? '—'} change={stats?.leads?.change} changeLabel="vs last month" icon={TrendingUp} color="primary" loading={statsLoading} />
           <KpiCard delay={40} title="Active Accounts" value={stats?.accounts?.total ?? '—'} icon={UserCheck} color="success" loading={statsLoading} />
           <KpiCard delay={80} title="Pipeline Value" value={stats?.pipeline?.value != null ? formatCurrency(stats.pipeline.value) : '—'} icon={DollarSign} color="warning" loading={statsLoading} />
-          <KpiCard delay={120} title="Employees" value={stats?.employees?.total ?? '—'} icon={Users} color="info" loading={statsLoading} />
-          <KpiCard delay={160} title="Open Tickets" value={stats?.tickets?.open ?? '—'} icon={Ticket} color="danger" loading={statsLoading} />
-          <KpiCard delay={200} title="Inventory Items" value={stats?.inventory?.total ?? '—'} icon={Package} color="gray" loading={statsLoading} />
+          <KpiCard delay={120} title="Deals Won" value={stats?.won?.count ?? '—'} changeLabel={stats?.won?.thisMonth != null ? `${stats.won.thisMonth} this month` : undefined} icon={Trophy} color="success" loading={statsLoading} />
+          <KpiCard delay={160} title="Won Revenue" value={stats?.won?.value != null ? formatCurrency(stats.won.value) : '—'} icon={Wallet} color="success" loading={statsLoading} />
+          <KpiCard delay={200} title="Employees" value={stats?.employees?.total ?? '—'} icon={Users} color="info" loading={statsLoading} />
+          <KpiCard delay={240} title="Open Tickets" value={stats?.tickets?.open ?? '—'} icon={Ticket} color="danger" loading={statsLoading} />
+          <KpiCard delay={280} title="Inventory Items" value={stats?.inventory?.total ?? '—'} icon={Package} color="gray" loading={statsLoading} />
         </div>
 
         {/* Charts row */}
@@ -99,6 +108,17 @@ export default function Dashboard() {
 
         {/* Top deals table — full width */}
         <TopDealsTable items={topDeals?.items} loading={dealsLoading} />
+
+        {/* Recently won deals — full width */}
+        <TopDealsTable
+          items={wonDeals?.items}
+          loading={wonDealsLoading}
+          title="Recently Won Deals"
+          icon={Trophy}
+          viewAllTo="/crm/opportunities?stage=Closed Won"
+          emptyMessage="No deals won yet — mark an opportunity as Closed Won to see it here"
+          dateColumnLabel="Won On"
+        />
       </div>
     </div>
   )

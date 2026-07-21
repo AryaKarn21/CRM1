@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Building2, Upload, Download } from 'lucide-react'
+import { Plus, Building2, Upload, Download, Eye } from 'lucide-react'
 import { accountsAPI } from '@/api/accounts.api'
 import DataTable from '@/components/shared/DataTable'
 import FilterBar from '@/components/shared/FilterBar'
@@ -179,6 +179,64 @@ export default function AccountsList() {
     },
   ]
 
+  // Mobile card (< sm): same info + same View/Edit/Delete actions as the
+  // desktop table's Actions column, which DataTable's default mobile
+  // fallback (first 3 columns only) doesn't include.
+  const renderMobileCard = (row) => (
+    <div className="space-y-3">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: 'var(--primary-light)' }}
+          >
+            <Building2 size={15} style={{ color: 'var(--primary)' }} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[13px] font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+              {row.name}
+            </p>
+            <p className="text-[11px] truncate" style={{ color: 'var(--text-muted)' }}>
+              {row.website || row.email || '—'}
+            </p>
+          </div>
+        </div>
+        {row.type ? <Badge variant="info" className="shrink-0">{row.type}</Badge> : null}
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 text-[12px]" style={{ color: 'var(--text-secondary)' }}>
+        <span>{row.industry || '—'}</span>
+        <span className="text-right">{row.phone || '—'}</span>
+        <span>{row.annualRevenue ? formatCurrency(row.annualRevenue) : '—'}</span>
+        <span className="text-right">{formatDate(row.createdAt)}</span>
+      </div>
+
+      <div
+        className="flex items-center justify-end gap-2 pt-2 border-t"
+        style={{ borderColor: 'var(--border)' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/crm/accounts/${row.id}`)}>
+          <Eye size={13} /> View
+        </button>
+        <button
+          className="btn btn-ghost btn-sm text-blue-600"
+          onClick={() => navigate(`/crm/accounts/${row.id}/edit`)}
+        >
+          Edit
+        </button>
+        <button
+          className="btn btn-ghost btn-sm text-red-500"
+          onClick={() => {
+            if (window.confirm('Delete this account?')) deleteMutation.mutate(row.id)
+          }}
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  )
+
   return (
     <div className="animate-fade-in">
       {/* ================= HEADER ================= */}
@@ -256,6 +314,7 @@ export default function AccountsList() {
           onSort={(k, d) => setParams((p) => ({ ...p, sortKey: k, sortDir: d }))}
           onPageChange={(page) => setParams((p) => ({ ...p, page }))}
           onRowClick={(row) => navigate(`/crm/accounts/${row.id}`)}
+          mobileCard={renderMobileCard}
           emptyTitle="No accounts yet"
           emptyDescription="Add your first account to get started"
         />

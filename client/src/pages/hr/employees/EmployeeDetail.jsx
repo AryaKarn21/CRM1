@@ -30,10 +30,12 @@ import {
 
 import { employeesAPI } from "@/api/employees.api";
 import { performanceAPI } from "@/api/performance.api";
+import { shiftsAPI } from "@/api/shifts.api";
 
 import Avatar from "@/components/ui/Avatar";
 import Badge from "@/components/ui/Badge";
 import Modal from "@/components/ui/Modal";
+import StarRating from "@/components/ui/StarRating";
 import StatCard from "@/components/shared/StatCard";
 import ChartWidget from "@/components/shared/ChartWidget";
 import { Tabs } from "@/components/ui/Tabs";
@@ -165,6 +167,8 @@ export default function EmployeeDetail() {
   const [docForm, setDocForm] = useState({ name: "", url: "" });
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [reviewForm, setReviewForm] = useState(emptyReview);
+  const [shiftModalOpen, setShiftModalOpen] = useState(false);
+  const [selectedShiftId, setSelectedShiftId] = useState("");
   const [reportForm, setReportForm] = useState({
     reportDate: new Date().toISOString().slice(0, 10),
     title: "",
@@ -246,6 +250,24 @@ export default function EmployeeDetail() {
       queryClient.invalidateQueries({ queryKey: ["employee-documents", id] });
     },
     onError: (err) => toast.error(err?.response?.data?.message || "Failed to remove document"),
+  });
+
+  const { data: shiftData } = useQuery({
+    queryKey: ["shifts"],
+    queryFn: async () => (await shiftsAPI.getAll()).data,
+    enabled: shiftModalOpen,
+  });
+  const shifts = shiftData?.shifts || shiftData || [];
+
+  const assignShiftMutation = useMutation({
+    mutationFn: (shiftId) => employeesAPI.assignShift(id, shiftId || null),
+    onSuccess: () => {
+      toast.success("Shift updated");
+      queryClient.invalidateQueries({ queryKey: ["employee", id] });
+      queryClient.invalidateQueries({ queryKey: ["employee-timeline", id] });
+      setShiftModalOpen(false);
+    },
+    onError: (err) => toast.error(err?.response?.data?.message || "Failed to update shift"),
   });
 
   const createReview = useMutation({
@@ -435,12 +457,19 @@ export default function EmployeeDetail() {
                 >
                   <Download size={16} /> Export History
                 </button>
-                <a
+                
                   href={`mailto:${employee.email}`}
                   className="btn btn-secondary flex-1 xl:flex-none text-center"
-                >
                   Send Email
-                </a>
+                <button
+                  onClick={() => {
+                    setSelectedShiftId(employee.shiftId || employee.shift?.id || "");
+                    setShiftModalOpen(true);
+                  }}
+                  className="btn btn-secondary flex items-center justify-center gap-2 flex-1 xl:flex-none"
+                >
+                  <Clock size={16} /> Assign Shift
+                </button>
                 <button
                   onClick={() => navigate(`/hr/employees/${employee.id}/edit`)}
                   className="btn btn-primary flex-1 xl:flex-none"
@@ -484,7 +513,13 @@ export default function EmployeeDetail() {
                       />
                       <StatCard
                         title="Avg. Performance"
-                        value={`${stats?.performance?.averageRating ?? 0}/5`}
+                        value={
+                          <StarRating
+                            value={stats?.performance?.averageRating ?? 0}
+                            count={stats?.performance?.totalReviews ?? 0}
+                            size={16}
+                          />
+                        }
                         icon={Star}
                         color="warning"
                       />
@@ -967,7 +1002,13 @@ export default function EmployeeDetail() {
                     <div className="grid grid-cols-2 gap-4">
                       <StatCard
                         title="Average Rating"
-                        value={`${performanceData?.averageRating ?? 0}/5`}
+                        value={
+                          <StarRating
+                            value={performanceData?.averageRating ?? 0}
+                            count={performanceData?.total ?? 0}
+                            size={16}
+                          />
+                        }
                         icon={Star}
                         color="warning"
                       />
@@ -1000,10 +1041,8 @@ export default function EmployeeDetail() {
                                   </Badge>
                                 )}
                                 <div className="text-right">
-                                  <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>Overall</p>
-                                  <p className="text-2xl font-bold" style={{ color: "var(--warning)" }}>
-                                    {review.overallRating}/5
-                                  </p>
+                                  <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>Overall</p>
+                                  <StarRating value={review.overallRating} count={1} size={15} />
                                 </div>
                               </div>
                             </div>
@@ -1014,10 +1053,8 @@ export default function EmployeeDetail() {
                             >
                               {RATING_FIELDS.map(([label, key]) => (
                                 <div key={key} className="text-center">
-                                  <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>{label}</p>
-                                  <p className="font-semibold text-[13px]" style={{ color: "var(--text-primary)" }}>
-                                    {review[key]}/5
-                                  </p>
+                                  <p className="text-[11px] mb-1" style={{ color: "var(--text-muted)" }}>{label}</p>
+                                  <StarRating value={review[key]} count={1} size={11} showValue={false} />
                                 </div>
                               ))}
                             </div>
@@ -1044,7 +1081,7 @@ export default function EmployeeDetail() {
                         ))
                       ) : (
                         <div className="card p-10 text-center" style={{ color: "var(--text-muted)" }}>
-                          No performance reviews recorded yet. Click “New Review” to add the first one.
+                          No performance reviews recorded yet. Click "New Review" to add the first one.
                         </div>
                       )}
                     </div>
@@ -1148,6 +1185,55 @@ export default function EmployeeDetail() {
           </div>
         </div>
       </div>
+
+      {/* ================= ASSIGN SHIFT MODAL ================= */}
+      <Modal
+        open={shiftModalOpen}
+        onClose={() => setShiftModalOpen(false)}
+        title="Assign Shift"
+        size="sm"
+        footer={
+          <div className="flex justify-end gap-3">
+            <button className="btn btn-ghost" onClick={() => setShiftModalOpen(false)}>Cancel</button>
+            <button
+              className="btn btn-primary"
+              disabled={assignShiftMutation.isPending}
+              onClick={() => assignShiftMutation.mutate(selectedShiftId)}
+            >
+              {assignShiftMutation.isPending ? "Saving…" : "Save"}
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4 p-1">
+          <p className="text-[12.5px]" style={{ color: "var(--text-secondary)" }}>
+            Choose the working shift for <strong>{employee.firstName} {employee.lastName}</strong>.
+          </p>
+          <div>
+            <label className="text-[13px] font-medium block mb-1" style={{ color: "var(--text-secondary)" }}>
+              Shift
+            </label>
+            <select
+              className="input w-full"
+              value={selectedShiftId}
+              onChange={(e) => setSelectedShiftId(e.target.value)}
+            >
+              <option value="">No shift assigned</option>
+              {shifts.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                  {s.startTime && s.endTime ? ` (${s.startTime}–${s.endTime})` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+          {employee.shift?.name && (
+            <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+              Currently assigned: <strong>{employee.shift.name}</strong>
+            </p>
+          )}
+        </div>
+      </Modal>
 
       {/* ================= ADD DOCUMENT MODAL ================= */}
       <Modal

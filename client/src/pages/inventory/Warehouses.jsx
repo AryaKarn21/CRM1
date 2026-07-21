@@ -139,7 +139,7 @@ export default function Warehouses() {
 
   return (
     <div className="animate-fade-in">
-      <div className="page-header">
+      <div className="page-header flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-6 py-4">
         <div>
           <h1
             className="text-[18px] font-bold"
@@ -156,7 +156,7 @@ export default function Warehouses() {
           </p>
         </div>
 
-        <button className="btn btn-primary" onClick={() => setModalOpen(true)}>
+        <button className="btn btn-primary w-full sm:w-auto justify-center" onClick={() => setModalOpen(true)}>
           <Plus size={14} />
           Add Warehouse
         </button>
@@ -173,7 +173,7 @@ export default function Warehouses() {
         }
       />
 
-      <div className="mx-6 mb-6 card overflow-hidden">
+      <div className="mx-3 sm:mx-6 mb-6 card overflow-hidden">
         <DataTable
           columns={columns}
           data={data || []}
@@ -183,6 +183,56 @@ export default function Warehouses() {
           pageSize={20}
           total={data?.length || 0}
           onPageChange={() => {}}
+          mobileCard={(warehouse) => (
+            <div className="flex items-start gap-3">
+              <div
+                className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: "var(--primary-bg)" }}
+              >
+                <Building2 size={16} style={{ color: "var(--primary)" }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[13px] font-semibold truncate" style={{ color: "var(--text-primary)" }}>
+                    {warehouse.name}
+                  </p>
+                  <Badge variant={warehouse.isActive ? "success" : "gray"}>
+                    {warehouse.isActive ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
+                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                  {warehouse.code || "—"} · {warehouse.location || "No location"}
+                </p>
+                {warehouse.capacity != null && (
+                  <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                    Capacity: {warehouse.capacity}
+                  </p>
+                )}
+                <div className="flex items-center gap-2 mt-2">
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => {
+                      setSelectedWarehouse(warehouse);
+                      reset(warehouse);
+                      setModalOpen(true);
+                    }}
+                  >
+                    <Pencil size={13} className="mr-1" /> Edit
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-sm text-red-500"
+                    onClick={() => {
+                      if (window.confirm("Delete this warehouse?")) {
+                        deleteMutation.mutate(warehouse.id);
+                      }
+                    }}
+                  >
+                    <Trash2 size={13} className="mr-1" /> Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           actions={(warehouse) => (
             <div className="flex justify-center gap-2">
               <button
@@ -225,7 +275,7 @@ export default function Warehouses() {
         loading={saveMutation.isPending}
         onSubmit={handleSubmit((formData) => saveMutation.mutate(formData))}
       >
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="form-group col-span-2">
             <label className="form-label">Warehouse Name *</label>
 

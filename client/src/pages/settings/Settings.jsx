@@ -20,6 +20,11 @@ import RoleStatCards from './roles/RoleStatCards'
 import RoleCard from './roles/RoleCard'
 import RoleTable from './roles/RoleTable'
 import PermissionMatrixDrawer from './roles/PermissionMatrixDrawer'
+import AuditStatCards from './audit/AuditStatCards'
+import AuditModuleChart from './audit/AuditModuleChart'
+import AuditLogRow from './audit/AuditLogRow'
+import AuditTimeline from './audit/AuditTimeline'
+
 const TABS = [
   { key: 'company', label: 'Company' },
   { key: 'users', label: 'Users' },
@@ -55,6 +60,7 @@ export default function Settings() {
     </div>
   )
 }
+
 function CompanyTab() {
   const queryClient = useQueryClient()
 
@@ -96,219 +102,112 @@ function CompanyTab() {
     queryFn: () => settingsAPI.getCompanies().then((res) => res.data),
   })
 
-
   const deleteMutation = useMutation({
     mutationFn: (id) => settingsAPI.deleteCompany(id),
-
     onSuccess: () => {
       toast.success('Company deleted')
-
-      queryClient.invalidateQueries({
-        queryKey: ['company-settings'],
-      })
+      queryClient.invalidateQueries({ queryKey: ['company-settings'] })
     },
-
     onError: () => {
       toast.error('Unable to delete company')
     },
   })
 
-
-
-  
   const createMutation = useMutation({
     mutationFn: (data) => settingsAPI.addCompany(data),
     onSuccess: async () => {
       toast.success("Company created")
-
-      queryClient.invalidateQueries({
-        queryKey: ['company-settings']
-      })
+      queryClient.invalidateQueries({ queryKey: ['company-settings'] })
       const res = await authAPI.getProfile()
-
       refreshCompanies(res.data.companies)
-
       reset()
-
       setShowDialog(false)
-
       setEditingCompany(null)
     },
-
-
     onError: (err) => {
-      toast.error(
-        err.response?.data?.message || "Unable to create company"
-      )
+      toast.error(err.response?.data?.message || "Unable to create company")
     },
   })
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }) =>
-      settingsAPI.updateCompany(id, data),
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => settingsAPI.updateCompany(id, data),
     onSuccess: () => {
       toast.success("Company updated")
-
-      queryClient.invalidateQueries({
-        queryKey: ['company-settings'],
-      })
-
+      queryClient.invalidateQueries({ queryKey: ['company-settings'] })
       reset()
       setEditingCompany(null)
       setShowDialog(false)
     },
-
     onError: (err) => {
-      toast.error(
-        err.response?.data?.message || "Unable to update company"
-      )
+      toast.error(err.response?.data?.message || "Unable to update company")
     },
   })
+
   const onSubmit = (data) => {
     if (editingCompany) {
-      updateMutation.mutate({
-        id: editingCompany.id,
-        data,
-      })
+      updateMutation.mutate({ id: editingCompany.id, data })
     } else {
       createMutation.mutate(data)
     }
   }
 
-
   if (isLoading) {
     return (
-      <div
-        className="h-40 rounded-xl animate-pulse"
-        style={{ background: "var(--border)" }}
-      />
+      <div className="h-40 rounded-xl animate-pulse" style={{ background: "var(--border)" }} />
     )
   }
 
   return (
     <>
-      {/* Header */}
-
       <div className="flex items-center justify-between mb-6">
-
         <div>
-
-          <h2
-            className="text-lg font-semibold"
-            style={{ color: "var(--text-primary)" }}
-          >
+          <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
             Companies
           </h2>
-
-          <p
-            className="text-sm"
-            style={{ color: "var(--text-muted)" }}
-          >
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
             Manage all companies
           </p>
-
         </div>
 
         <button
           className="btn btn-primary"
           onClick={() => {
             reset()
-
             setEditingCompany(null)
-
             setShowDialog(true)
           }}
         >
           + Add Company
         </button>
-
       </div>
 
-      {/* Table */}
-
       <div className="card overflow-hidden">
-
         <table className="w-full">
-
           <thead>
-
-            <tr
-              style={{
-                background: "var(--surface-2)",
-              }}
-            >
-
-              <th className="text-left p-3">
-                Company
-              </th>
-
-              <th className="text-left p-3">
-                Industry
-              </th>
-
-              <th className="text-left p-3">
-                Email
-              </th>
-
-              <th className="text-left p-3">
-                Phone
-              </th>
-
-              <th className="text-center p-3">
-                Action
-              </th>
-
+            <tr style={{ background: "var(--surface-2)" }}>
+              <th className="text-left p-3">Company</th>
+              <th className="text-left p-3">Industry</th>
+              <th className="text-left p-3">Email</th>
+              <th className="text-left p-3">Phone</th>
+              <th className="text-center p-3">Action</th>
             </tr>
-
           </thead>
-
           <tbody>
-
             {companies.length === 0 ? (
-
               <tr>
-
-                <td
-                  colSpan={5}
-                  className="text-center py-10"
-                >
+                <td colSpan={5} className="text-center py-10">
                   No companies found
                 </td>
-
               </tr>
-
             ) : (
-
               companies.map((company) => (
-
-                <tr
-                  key={company.id}
-                  className="border-t"
-                  style={{
-                    borderColor: "var(--border)",
-                  }}
-                >
-
-                  <td className="p-3 font-medium">
-                    {company.name}
-                  </td>
-
+                <tr key={company.id} className="border-t" style={{ borderColor: "var(--border)" }}>
+                  <td className="p-3 font-medium">{company.name}</td>
+                  <td className="p-3">{company.industry || "-"}</td>
+                  <td className="p-3">{company.email || "-"}</td>
+                  <td className="p-3">{company.phone || "-"}</td>
                   <td className="p-3">
-                    {company.industry || "-"}
-                  </td>
-
-                  <td className="p-3">
-                    {company.email || "-"}
-                  </td>
-
-                  <td className="p-3">
-                    {company.phone || "-"}
-                  </td>
-
-                  <td className="p-3">
-
                     <div className="flex justify-center gap-2">
-
                       <button
                         className="btn btn-sm"
                         onClick={() => {
@@ -318,147 +217,69 @@ function CompanyTab() {
                       >
                         Edit
                       </button>
-
                       <button
                         className="btn btn-sm text-red-500"
                         onClick={() => {
-                          if (
-                            window.confirm(
-                              `Delete ${company.name}?`
-                            )
-                          ) {
+                          if (window.confirm(`Delete ${company.name}?`)) {
                             deleteMutation.mutate(company.id)
                           }
                         }}
                       >
                         Delete
                       </button>
-
                     </div>
-
                   </td>
-
                 </tr>
-
               ))
-
             )}
-
           </tbody>
-
         </table>
-
       </div>
 
       {showDialog && (
-
         <div
           className="fixed inset-0 flex items-center justify-center z-50"
-          style={{
-            background: "rgba(0,0,0,.5)",
-          }}
+          style={{ background: "rgba(0,0,0,.5)" }}
         >
-
-          <div
-            className="card w-[500px] p-6"
-          >
-
+          <div className="card w-[500px] p-6">
             <h2 className="text-xl font-bold mb-4">
-
-              {editingCompany
-                ? "Edit Company"
-                : "Add Company"}
-
+              {editingCompany ? "Edit Company" : "Add Company"}
             </h2>
 
-            <form
-              onSubmit={handleSubmit(onSubmit)}
-              className="space-y-4"
-            >
-
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
-                <label className="block text-sm mb-1">
-                  Company Name
-                </label>
-
-                <input
-                  {...register("name")}
-                  className="input w-full"
-                  placeholder="OS Group Pvt Ltd"
-                />
+                <label className="block text-sm mb-1">Company Name</label>
+                <input {...register("name")} className="input w-full" placeholder="OS Group Pvt Ltd" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-
                 <div>
-                  <label className="block text-sm mb-1">
-                    Industry
-                  </label>
-
-                  <input
-                    {...register("industry")}
-                    className="input w-full"
-                  />
+                  <label className="block text-sm mb-1">Industry</label>
+                  <input {...register("industry")} className="input w-full" />
                 </div>
-
                 <div>
-                  <label className="block text-sm mb-1">
-                    Website
-                  </label>
-
-                  <input
-                    className="input w-full"
-                    //placeholder="https://example.com"
-                    {...register("website")}
-                  />
+                  <label className="block text-sm mb-1">Website</label>
+                  <input className="input w-full" {...register("website")} />
                 </div>
-
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-
                 <div>
-                  <label className="block text-sm mb-1">
-                    Email
-                  </label>
-
-                  <input
-                    className="input w-full"
-                    placeholder="info@company.com"
-                    {...register("email")}
-                  />
+                  <label className="block text-sm mb-1">Email</label>
+                  <input className="input w-full" placeholder="info@company.com" {...register("email")} />
                 </div>
-
                 <div>
-                  <label className="block text-sm mb-1">
-                    Phone
-                  </label>
-
-                  <input
-                    {...register("phone")}
-                    className="input w-full"
-                    placeholder="+977..."
-                  />
+                  <label className="block text-sm mb-1">Phone</label>
+                  <input {...register("phone")} className="input w-full" placeholder="+977..." />
                 </div>
-
               </div>
 
               <div>
-
-                <label className="block text-sm mb-1">
-                  Address
-                </label>
-
-                <textarea
-                  {...register("address")}
-                  rows={3}
-                  className="input w-full"
-                />
-
+                <label className="block text-sm mb-1">Address</label>
+                <textarea {...register("address")} rows={3} className="input w-full" />
               </div>
 
               <div className="flex justify-end gap-3">
-
                 <button
                   type="button"
                   className="btn"
@@ -470,26 +291,14 @@ function CompanyTab() {
                 >
                   Cancel
                 </button>
-
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                >
+                <button type="submit" className="btn btn-primary">
                   {editingCompany ? "Update Company" : "Create Company"}
                 </button>
-
               </div>
-
             </form>
-
-
-
           </div>
-
         </div>
-
       )}
-
     </>
   )
 }
@@ -509,34 +318,25 @@ function UsersTab() {
     queryKey: ['settings-users', params],
     queryFn: () => settingsAPI.getUsers(params).then(r => r.data),
   })
+
   const createUserMutation = useMutation({
-  mutationFn: (data) => settingsAPI.createUser(data),
+    mutationFn: (data) => settingsAPI.createUser(data),
+    onSuccess: () => {
+      toast.success('User created successfully')
+      queryClient.invalidateQueries({ queryKey: ['settings-users'] })
+      reset()
+      setShowDialog(false)
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'Unable to create user')
+    },
+  })
 
-  onSuccess: () => {
-    toast.success('User created successfully')
-
-    queryClient.invalidateQueries({
-      queryKey: ['settings-users'],
-    })
-
-    reset()
-
-    setShowDialog(false)
-  },
-
-  onError: (err) => {
-    toast.error(
-      err.response?.data?.message ||
-      'Unable to create user'
-    )
-  },
-})
-const onSubmit = (data) => {
-  createUserMutation.mutate(data)
-}
+  const onSubmit = (data) => {
+    createUserMutation.mutate(data)
+  }
 
   const deactivateMutation = useMutation({
-    //mutationFn: settingsAPI.deactivateUser,
     mutationFn: (id) => settingsAPI.deactivateUser(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings-users'] })
@@ -592,19 +392,11 @@ const onSubmit = (data) => {
     <>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-lg font-semibold">
-            Users
-          </h2>
-
-          <p className="text-sm">
-            Manage all users
-          </p>
+          <h2 className="text-lg font-semibold">Users</h2>
+          <p className="text-sm">Manage all users</p>
         </div>
 
-        <button
-          className="btn btn-primary"
-          onClick={() => setShowDialog(true)}
-        >
+        <button className="btn btn-primary" onClick={() => setShowDialog(true)}>
           + Add User
         </button>
       </div>
@@ -616,135 +408,86 @@ const onSubmit = (data) => {
         page={params.page}
         pageSize={params.limit}
         loading={isLoading}
-        onPageChange={(page) =>
-          setParams(p => ({ ...p, page }))
-        }
+        onPageChange={(page) => setParams(p => ({ ...p, page }))}
         onRowClick={(row) => navigate(`/settings/users/${row.id}`)}
         emptyTitle="No users found"
       />
+
       {showDialog && (
-        <div className="fixed inset-0 flex items-center justify-center z-50"
-          style={{ background: "rgba(0,0,0,.5)" }}>
-
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50"
+          style={{ background: "rgba(0,0,0,.5)" }}
+        >
           <div className="card w-[500px] p-6">
+            <h2 className="text-xl font-bold mb-5">Add User</h2>
 
-            <h2 className="text-xl font-bold mb-5">
-              Add User
-            </h2>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div>
+                <label>Name</label>
+                <input
+                  className="input w-full"
+                  {...register('name', { required: 'Name is required' })}
+                />
+                {errors.name && <p className="text-red-500 text-xs">{errors.name.message}</p>}
+              </div>
 
-           <form
-  onSubmit={handleSubmit(onSubmit)}
-  className="space-y-4"
->
+              <div>
+                <label>Email</label>
+                <input
+                  type="email"
+                  className="input w-full"
+                  {...register('email', { required: 'Email is required' })}
+                />
+              </div>
 
-  <div>
-    <label>Name</label>
+              <div>
+                <label>Password</label>
+                <input
+                  type="password"
+                  className="input w-full"
+                  {...register('password', { required: 'Password is required' })}
+                />
+              </div>
 
-    <input
-      className="input w-full"
-      {...register('name', {
-        required: 'Name is required',
-      })}
-    />
+              <div>
+                <label>Phone</label>
+                <input className="input w-full" {...register('phone')} />
+              </div>
 
-    {errors.name && (
-      <p className="text-red-500 text-xs">
-        {errors.name.message}
-      </p>
-    )}
-  </div>
+              <div>
+                <label>Role</label>
+                <select className="input w-full" {...register('role')}>
+                  <option value="employee">Employee</option>
+                  <option value="manager">Manager</option>
+                  <option value="accountant">Accountant</option>
+                  <option value="admin">Admin</option>
+                  <option value="super_admin">Super Admin</option>
+                </select>
+              </div>
 
-  <div>
-    <label>Email</label>
-
-    <input
-      type="email"
-      className="input w-full"
-      {...register('email', {
-        required: 'Email is required',
-      })}
-    />
-  </div>
-
-  <div>
-    <label>Password</label>
-
-    <input
-      type="password"
-      className="input w-full"
-      {...register('password', {
-        required: 'Password is required',
-      })}
-    />
-  </div>
-
-  <div>
-    <label>Phone</label>
-
-    <input
-      className="input w-full"
-      {...register('phone')}
-    />
-  </div>
-
-  <div>
-    <label>Role</label>
-
-    <select
-      className="input w-full"
-      {...register('role')}
-    >
-      <option value="employee">Employee</option>
-      <option value="manager">Manager</option>
-      <option value="accountant">Accountant</option>
-      <option value="admin">Admin</option>
-      <option value="super_admin">Super Admin</option>
-    </select>
-  </div>
-
-  <div className="flex justify-end gap-3">
-
-    <button
-      type="button"
-      className="btn"
-      onClick={() => {
-        reset()
-        setShowDialog(false)
-      }}
-    >
-      Cancel
-    </button>
-
-    <button
-      className="btn btn-primary"
-      disabled={createUserMutation.isPending}
-    >
-      {createUserMutation.isPending
-        ? 'Creating...'
-        : 'Create User'}
-    </button>
-
-  </div>
-
-</form>
-
-            <button
-              className="btn btn-primary mt-5"
-              onClick={() => setShowDialog(false)}
-            >
-              Close
-            </button>
-
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => {
+                    reset()
+                    setShowDialog(false)
+                  }}
+                >
+                  Cancel
+                </button>
+                <button className="btn btn-primary" disabled={createUserMutation.isPending}>
+                  {createUserMutation.isPending ? 'Creating...' : 'Create User'}
+                </button>
+              </div>
+            </form>
           </div>
-
         </div>
       )}
-
     </>
-
   )
-
 }
+
 function RolesTab() {
   const queryClient = useQueryClient()
   const [modalOpen, setModalOpen] = useState(false)
@@ -753,11 +496,9 @@ function RolesTab() {
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
-  const [viewMode, setViewMode] = useState('card') // 'card' | 'table'
+  const [viewMode, setViewMode] = useState('card')
   const [selectedIds, setSelectedIds] = useState([])
 
-  // Debounce search input so we don't fire a query on every keystroke —
-  // waits 350ms after the user stops typing before hitting the API.
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 350)
     return () => clearTimeout(timer)
@@ -770,13 +511,9 @@ function RolesTab() {
 
   const roles = data?.roles || []
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    watch,
-    setValue,
-  } = useForm({ defaultValues: { name: '', description: '', permissions: {} } })
+  const { register, handleSubmit, reset, watch, setValue } = useForm({
+    defaultValues: { name: '', description: '', permissions: {} },
+  })
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['roles'] })
@@ -886,7 +623,6 @@ function RolesTab() {
     <div className="flex flex-col gap-4 sm:gap-5">
       <RoleStatCards />
 
-      {/* Toolbar: search, filter, view toggle, create */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <input
           className="input flex-1"
@@ -940,24 +676,15 @@ function RolesTab() {
         </button>
       </div>
 
-      {/* Bulk action bar — only shows when something is selected */}
       {selectedIds.length > 0 && (
         <div className="flex flex-wrap items-center gap-3 px-4 py-2.5 rounded-lg" style={{ background: 'var(--surface-2)' }}>
           <span className="text-[12px] font-medium" style={{ color: 'var(--text-primary)' }}>
             {selectedIds.length} selected
           </span>
-          <button
-            className="btn btn-ghost btn-sm"
-            disabled={anyBulkPending}
-            onClick={() => bulkActivateMutation.mutate(selectedIds)}
-          >
+          <button className="btn btn-ghost btn-sm" disabled={anyBulkPending} onClick={() => bulkActivateMutation.mutate(selectedIds)}>
             Activate
           </button>
-          <button
-            className="btn btn-ghost btn-sm"
-            disabled={anyBulkPending}
-            onClick={() => bulkDeactivateMutation.mutate(selectedIds)}
-          >
+          <button className="btn btn-ghost btn-sm" disabled={anyBulkPending} onClick={() => bulkDeactivateMutation.mutate(selectedIds)}>
             Deactivate
           </button>
           <button
@@ -1054,53 +781,233 @@ function RolesTab() {
 }
 
 function AuditTab() {
-  const [params] = useState({ page: 1, limit: 20 })
+  const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [moduleFilter, setModuleFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const [viewMode, setViewMode] = useState('list')
+  const [page, setPage] = useState(1)
+  const limit = 20
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['audit-logs', params],
-    queryFn: () => settingsAPI.getAuditLogs(params).then(r => r.data),
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 350)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch, moduleFilter, statusFilter, startDate, endDate])
+
+  const { data: statsData } = useQuery({
+    queryKey: ['audit-stats'],
+    queryFn: () => settingsAPI.getAuditStats().then((r) => r.data),
   })
 
-  const columns = [
-    {
-      key: 'user', label: 'User',
-      render: (val) => val ? (
-        <div className="flex items-center gap-2">
-          <Avatar name={val.name} size="xs" />
-          <span className="text-[12px]">{val.name}</span>
-        </div>
-      ) : 'System',
-    },
-    {
-      key: 'action', label: 'Action',
-      render: (val) => <span className="font-medium text-[12px]">{val}</span>,
-    },
-    {
-      key: 'resource', label: 'Resource',
-      render: (val) => <Badge variant="gray">{val}</Badge>,
-    },
-    {
-      key: 'ipAddress', label: 'IP',
-      render: (val) => (
-        <span className="font-mono text-[11px]">{val || '—'}</span>
-      ),
-    },
-    {
-      key: 'createdAt', label: 'Time',
-      render: (val) => formatDate(val, 'MMM d, yyyy HH:mm'),
-    },
+  const queryParams = {
+    page,
+    limit,
+    search: debouncedSearch || undefined,
+    module: moduleFilter || undefined,
+    status: statusFilter || undefined,
+    startDate: startDate || undefined,
+    endDate: endDate || undefined,
+  }
 
-  ]
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ['audit-logs', queryParams],
+    queryFn: () => settingsAPI.getAuditLogs(queryParams).then((r) => r.data),
+  })
+
+  const logs = data?.logs || []
+  const total = data?.total || 0
+  const totalPages = Math.max(1, Math.ceil(total / limit))
+
+  const [exporting, setExporting] = useState(false)
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const res = await settingsAPI.exportAuditLogs(queryParams)
+      const url = window.URL.createObjectURL(new Blob([res.data]))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `audit-logs-${Date.now()}.csv`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+      toast.success('Audit log exported')
+    } catch {
+      toast.error('Export failed')
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const clearFilters = () => {
+    setSearch('')
+    setModuleFilter('')
+    setStatusFilter('')
+    setStartDate('')
+    setEndDate('')
+  }
+
+  const hasActiveFilters = debouncedSearch || moduleFilter || statusFilter || startDate || endDate
+  const moduleOptions = (statsData?.byModule || []).map((m) => m.module).filter(Boolean)
 
   return (
-    <DataTable
-      columns={columns}
-      data={data?.logs || []}
-      total={data?.total || 0}
-      loading={isLoading}
-      emptyTitle="No audit logs"
+    <div className="flex flex-col gap-4 sm:gap-5">
+      <AuditStatCards />
+      <AuditModuleChart />
 
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <input
+            className="input flex-1"
+            placeholder="Search by action, resource, or ID..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label="Search audit logs"
+          />
+          <button className="btn btn-secondary shrink-0" onClick={handleExport} disabled={exporting}>
+            {exporting ? 'Exporting...' : 'Export CSV'}
+          </button>
+        </div>
 
-    />
+        <div className="flex flex-wrap gap-3">
+          <select
+            className="input sm:w-40"
+            value={moduleFilter}
+            onChange={(e) => setModuleFilter(e.target.value)}
+            aria-label="Filter by module"
+          >
+            <option value="">All Modules</option>
+            {moduleOptions.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="input sm:w-36"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            aria-label="Filter by status"
+          >
+            <option value="">All Status</option>
+            <option value="success">Success</option>
+            <option value="failed">Failed</option>
+          </select>
+
+          <input
+            type="date"
+            className="input sm:w-40"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            aria-label="Start date"
+          />
+          <input
+            type="date"
+            className="input sm:w-40"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            aria-label="End date"
+          />
+
+          <div className="flex rounded-lg border overflow-hidden shrink-0" style={{ borderColor: 'var(--border)' }}>
+            <button
+              type="button"
+              className="px-3 py-2 text-[12px] transition-colors"
+              style={{
+                background: viewMode === 'list' ? 'var(--surface-2)' : 'transparent',
+                color: 'var(--text-primary)',
+                fontWeight: viewMode === 'list' ? 600 : 400,
+              }}
+              onClick={() => setViewMode('list')}
+              aria-pressed={viewMode === 'list'}
+            >
+              List
+            </button>
+            <button
+              type="button"
+              className="px-3 py-2 text-[12px] transition-colors"
+              style={{
+                background: viewMode === 'timeline' ? 'var(--surface-2)' : 'transparent',
+                color: 'var(--text-primary)',
+                fontWeight: viewMode === 'timeline' ? 600 : 400,
+              }}
+              onClick={() => setViewMode('timeline')}
+              aria-pressed={viewMode === 'timeline'}
+            >
+              Timeline
+            </button>
+          </div>
+
+          {hasActiveFilters && (
+            <button className="btn btn-ghost btn-sm" onClick={clearFilters}>
+              Clear Filters
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="card overflow-hidden">
+        {isLoading ? (
+          <div className="p-4 flex flex-col gap-2">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-10 rounded animate-pulse" style={{ background: 'var(--border)' }} />
+            ))}
+          </div>
+        ) : isError ? (
+          <div className="p-6 text-center">
+            <p className="text-[13px] font-medium text-red-500">Failed to load audit logs</p>
+            <p className="text-[12px] mt-1" style={{ color: 'var(--text-muted)' }}>
+              {error?.response?.data?.message || 'Something went wrong. Please try again.'}
+            </p>
+          </div>
+        ) : logs.length === 0 ? (
+          <div className="p-10 text-center">
+            <p className="text-[14px] font-medium" style={{ color: 'var(--text-primary)' }}>
+              {hasActiveFilters ? 'No logs match your filters' : 'No audit logs yet'}
+            </p>
+            <p className="text-[12px] mt-1" style={{ color: 'var(--text-muted)' }}>
+              {hasActiveFilters ? 'Try adjusting your search or filters.' : 'Activity will appear here as it happens.'}
+            </p>
+          </div>
+        ) : viewMode === 'timeline' ? (
+          <AuditTimeline logs={logs} />
+        ) : (
+          logs.map((log) => <AuditLogRow key={log.id} log={log} />)
+        )}
+
+        {!isLoading && !isError && logs.length > 0 && (
+          <div
+            className="flex flex-col sm:flex-row items-center justify-between gap-2 px-4 py-3 border-t text-[12px]"
+            style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+          >
+            <span>
+              Showing {(page - 1) * limit + 1}–{Math.min(page * limit, total)} of {total}
+            </span>
+            <div className="flex items-center gap-2">
+              <button className="btn btn-ghost btn-sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+                Previous
+              </button>
+              <span>
+                Page {page} of {totalPages}
+              </span>
+              <button
+                className="btn btn-ghost btn-sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }

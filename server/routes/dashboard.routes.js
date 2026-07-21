@@ -18,6 +18,7 @@ router.get('/stats', protect, async (req, res, next) => {
       totalLeads, leadsThisMonth, leadsLastMonth,
       totalAccounts,
       opportunities,
+      wonOpportunities,
       totalEmployees,
       openTickets,
       totalInventory,
@@ -27,12 +28,15 @@ router.get('/stats', protect, async (req, res, next) => {
       Lead.count({ where: { companyId: company, createdAt: { [Op.gte]: startOfLastMonth, [Op.lte]: endOfLastMonth } } }),
       Account.count({ where: { companyId: company } }),
       Opportunity.findAll({ where: { companyId: company, stage: { [Op.notIn]: ['Closed Won', 'Closed Lost'] } }, attributes: ['value'] }),
+      Opportunity.findAll({ where: { companyId: company, stage: 'Closed Won' }, attributes: ['value', 'updatedAt'] }),
       Employee.count({ where: { companyId: company, status: 'active' } }),
       Ticket.count({ where: { companyId: company, status: { [Op.notIn]: ['Resolved', 'Closed'] } } }),
       InventoryItem.count({ where: { companyId: company } }),
     ])
 
     const pipelineValue = opportunities.reduce((s, o) => s + (o.value || 0), 0)
+    const wonValue = wonOpportunities.reduce((s, o) => s + (o.value || 0), 0)
+    const wonThisMonth = wonOpportunities.filter(o => new Date(o.updatedAt) >= startOfMonth).length
     const leadsChange = leadsLastMonth
       ? Math.round(((leadsThisMonth - leadsLastMonth) / leadsLastMonth) * 100)
       : 0
@@ -41,6 +45,7 @@ router.get('/stats', protect, async (req, res, next) => {
       leads:     { total: totalLeads, change: leadsChange },
       accounts:  { total: totalAccounts },
       pipeline:  { value: pipelineValue },
+      won:       { count: wonOpportunities.length, value: wonValue, thisMonth: wonThisMonth },
       employees: { total: totalEmployees },
       tickets:   { open: openTickets },
       inventory: { total: totalInventory },
@@ -129,10 +134,13 @@ router.get('/top-deals', protect, async (req, res, next) => {
   try {
     const company = req.headers['x-company-id'] || req.user.companyId
     const limit = parseInt(req.query.limit) || 5
+    const isWon = req.query.type === 'won'
 
     const deals = await Opportunity.findAll({
-      where: { companyId: company, stage: { [Op.notIn]: ['Closed Won', 'Closed Lost'] } },
-      order: [['value', 'DESC']],
+      where: isWon
+        ? { companyId: company, stage: 'Closed Won' }
+        : { companyId: company, stage: { [Op.notIn]: ['Closed Won', 'Closed Lost'] } },
+      order: isWon ? [['updatedAt', 'DESC']] : [['value', 'DESC']],
       limit,
       include: [
         { model: Account, as: 'account', attributes: ['name'] },
@@ -150,6 +158,7 @@ router.get('/top-deals', protect, async (req, res, next) => {
         value: d.value || 0,
         probability: d.probability ?? 0,
         closeDate: d.closeDate,
+        wonAt: d.updatedAt,
       })),
     })
   } catch (err) { next(err) }

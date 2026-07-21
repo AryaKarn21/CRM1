@@ -11,6 +11,8 @@ const STAGE_COLORS = {
   'Perception Analysis': 'primary',
   'Proposal/Price': 'success',
   'Negotiation/Review': 'success',
+  'Closed Won': 'success',
+  'Closed Lost': 'danger',
 }
 
 function StageBadge({ stage }) {
@@ -20,6 +22,7 @@ function StageBadge({ stage }) {
     warning: { bg: 'var(--warning-bg)', fg: 'var(--warning)' },
     primary: { bg: 'var(--primary-light)', fg: 'var(--primary)' },
     success: { bg: 'var(--success-bg)', fg: 'var(--success)' },
+    danger: { bg: 'var(--danger-bg)', fg: 'var(--danger)' },
     gray: { bg: 'var(--surface-2)', fg: 'var(--text-secondary)' },
   }
   const c = map[tone]
@@ -33,15 +36,23 @@ function StageBadge({ stage }) {
   )
 }
 
-export default function TopDealsTable({ items = [], loading }) {
+export default function TopDealsTable({
+  items = [],
+  loading,
+  title = 'Top Open Deals',
+  icon: HeaderIcon = Briefcase,
+  viewAllTo = '/crm/opportunities',
+  emptyMessage = 'No open deals yet',
+  dateColumnLabel = 'Close Date',
+}) {
   return (
     <div className="dash-card overflow-hidden">
       <div className="dash-card-head">
         <div className="flex items-center gap-2">
-          <Briefcase size={15} style={{ color: 'var(--primary)' }} />
-          <h3 className="text-[14px] font-semibold" style={{ color: 'var(--text-primary)' }}>Top Open Deals</h3>
+          <HeaderIcon size={15} style={{ color: 'var(--primary)' }} />
+          <h3 className="text-[14px] font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h3>
         </div>
-        <Link to="/crm/opportunities" className="text-[12px] font-semibold flex items-center gap-1" style={{ color: 'var(--primary)' }}>
+        <Link to={viewAllTo} className="text-[12px] font-semibold flex items-center gap-1" style={{ color: 'var(--primary)' }}>
           View all <ArrowUpRight size={13} />
         </Link>
       </div>
@@ -55,7 +66,7 @@ export default function TopDealsTable({ items = [], loading }) {
               <th>Owner</th>
               <th>Stage</th>
               <th>Probability</th>
-              <th>Close Date</th>
+              <th>{dateColumnLabel}</th>
               <th style={{ textAlign: 'right' }}>Value</th>
             </tr>
           </thead>
@@ -90,7 +101,7 @@ export default function TopDealsTable({ items = [], loading }) {
             ) : (
               <tr>
                 <td colSpan={7} className="text-center py-8" style={{ color: 'var(--text-muted)' }}>
-                  No open deals yet
+                  {emptyMessage}
                 </td>
               </tr>
             )}

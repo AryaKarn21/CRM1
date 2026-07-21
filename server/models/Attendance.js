@@ -21,6 +21,9 @@ Attendance.init(
     checkIn: { type: DataTypes.DATE },
     checkOut: { type: DataTypes.DATE },
 
+    hoursWorked: { type: DataTypes.FLOAT },
+    overtimeHours: { type: DataTypes.FLOAT, defaultValue: 0 },
+    date: { type: DataTypes.DATEONLY, allowNull: false },
     status: {
       type: DataTypes.ENUM("present", "absent", "late", "half_day", "holiday"),
       defaultValue: "present",

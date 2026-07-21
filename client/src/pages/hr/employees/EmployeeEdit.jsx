@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { employeesAPI } from "@/api/employees.api";
+import { shiftsAPI } from "@/api/shifts.api";
 
 export default function EmployeeEdit() {
   const { id } = useParams();
@@ -16,12 +17,19 @@ export default function EmployeeEdit() {
     designation: "",
     salary: "",
     empid: "",
+    shiftId: "",
   });
 
   const { data: employee } = useQuery({
     queryKey: ["employee", id],
     queryFn: () => employeesAPI.getById(id).then((res) => res.data),
   });
+
+  const { data: shiftData } = useQuery({
+    queryKey: ["shifts"],
+    queryFn: () => shiftsAPI.getAll().then((res) => res.data),
+  });
+  const shifts = shiftData?.shifts || shiftData || [];
 
   useEffect(() => {
     if (employee) {
@@ -34,6 +42,7 @@ export default function EmployeeEdit() {
         designation: employee.designation || "",
         salary: employee.salary || "",
         empid: employee.employeeId || "",
+        shiftId: employee.shiftId || employee.shift?.id || "",
       });
     }
   }, [employee]);
@@ -54,14 +63,14 @@ export default function EmployeeEdit() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] p-8 text-slate-800">
+    <div className="min-h-screen bg-[#f8fafc] p-4 sm:p-8 text-slate-800">
       {/* Top Navigation Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+        <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="p-2 hover:bg-slate-150 rounded-full text-slate-500 transition-colors"
+            className="p-2 hover:bg-slate-150 rounded-full text-slate-500 transition-colors shrink-0"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
@@ -69,21 +78,21 @@ export default function EmployeeEdit() {
           </button>
           
           {/* Avatar Initial */}
-          <div className="w-12 h-12 rounded-full bg-[#fef3c7] text-[#d97706] font-semibold flex items-center justify-center text-lg shadow-sm border border-amber-100">
+          <div className="w-12 h-12 rounded-full bg-[#fef3c7] text-[#d97706] font-semibold flex items-center justify-center text-lg shadow-sm border border-amber-100 shrink-0">
             {formData.firstName ? formData.firstName.charAt(0).toUpperCase() : "E"}
           </div>
 
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 break-words">
                 {formData.firstName || "Edit"} {formData.lastName || "Employee"}
               </h1>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200 shrink-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
                 active
               </span>
             </div>
-            <p className="text-sm text-slate-400 mt-0.5 font-medium">
+            <p className="text-sm text-slate-400 mt-0.5 font-medium truncate">
               {formData.designation || "Designation"} — {formData.department || "Department"}
             </p>
           </div>
@@ -92,25 +101,25 @@ export default function EmployeeEdit() {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="px-4 py-2 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 shadow-sm transition-all"
+          className="px-4 py-2 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 shadow-sm transition-all w-full sm:w-auto"
         >
           Cancel
         </button>
       </div>
 
       {/* Main Layout Container */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8 items-start">
         
         {/* Form Card */}
         <form onSubmit={handleSubmit} className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           {/* Tab Mock-line mimicking the screenshot view */}
-          <div className="border-b border-slate-100 px-6 pt-4 flex gap-8">
-            <span className="text-sm font-semibold text-blue-600 border-b-2 border-blue-600 pb-3 cursor-pointer">
+          <div className="border-b border-slate-100 px-4 sm:px-6 pt-4 flex gap-8 overflow-x-auto">
+            <span className="text-sm font-semibold text-blue-600 border-b-2 border-blue-600 pb-3 cursor-pointer whitespace-nowrap">
               Edit Details
             </span>
           </div>
 
-          <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="p-4 sm:p-8 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             
             <div>
               <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">First Name</label>
@@ -181,6 +190,23 @@ export default function EmployeeEdit() {
               />
             </div>
 
+            <div>
+              <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Shift</label>
+              <select
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 bg-slate-50/50 transition-all text-sm font-medium"
+                value={formData.shiftId}
+                onChange={(e) => setFormData({ ...formData, shiftId: e.target.value })}
+              >
+                <option value="">No shift assigned</option>
+                {shifts.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                    {s.startTime && s.endTime ? ` (${s.startTime}–${s.endTime})` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="md:col-span-2">
               <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Salary Amount</label>
               <input
@@ -205,7 +231,7 @@ export default function EmployeeEdit() {
         </form>
 
         {/* Quick Info Sidebar Block */}
-        <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-100 p-4 sm:p-6 shadow-sm w-full">
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Quick Info Summary</h3>
           <div className="space-y-4">
             <div>
@@ -215,6 +241,12 @@ export default function EmployeeEdit() {
             <div>
               <span className="text-xs font-medium text-slate-400 block">Gross Salary Info</span>
               <span className="text-sm font-bold text-blue-600">{formData.salary || "NPR 0.00"}</span>
+            </div>
+            <div>
+              <span className="text-xs font-medium text-slate-400 block">Shift</span>
+              <span className="text-sm font-bold text-slate-800">
+                {shifts.find((s) => s.id === formData.shiftId)?.name || "Not assigned"}
+              </span>
             </div>
             <div className="pt-2 border-t border-slate-50 text-[11px] text-slate-400 italic">
               Fields modified here will update across CRM modules dynamically.

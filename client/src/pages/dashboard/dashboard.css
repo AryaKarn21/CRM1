@@ -11,15 +11,18 @@
 /* ---------- Page header ---------- */
 .dash-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  row-gap: 8px;
   padding: 18px 20px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: 20;
+  /* Intentionally NOT sticky — the app already has a persistent global
+     Topbar. Making this header sticky too caused it to pin in place and
+     clip the KPI card titles directly beneath it as soon as the page
+     scrolled even slightly. */
 }
 
 .dash-refresh-btn {
@@ -43,6 +46,15 @@
 .dash-refresh-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 .dash-refresh-btn .dash-spin { animation: dashSpin 0.7s linear infinite; }
 
+/* ---------- Content wrapper ---------- */
+/* Prevents cards/charts from over-stretching into unreadable widths on
+   ultra-wide monitors while still filling the viewport on everything else. */
+.dash-content {
+  max-width: 1920px;
+  margin: 0 auto;
+  width: 100%;
+}
+
 /* ---------- Grid system ---------- */
 .dash-kpi-grid {
   display: grid;
@@ -51,6 +63,7 @@
 }
 @media (min-width: 640px) { .dash-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 1024px) { .dash-kpi-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 1536px) { .dash-kpi-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 
 .dash-main-grid {
   display: grid;
@@ -126,9 +139,11 @@
 
 .dash-card-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  row-gap: 6px;
   padding: 16px 18px;
   border-bottom: 1px solid var(--border);
 }
@@ -320,3 +335,50 @@
     transition-duration: 0.001ms !important;
   }
 }
+/* ---------- KPI cards ---------- */
+.dash-kpi-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 20px 18px;
+  overflow: hidden;
+  cursor: default;
+  transition: transform var(--dash-transition), box-shadow var(--dash-transition), border-color var(--dash-transition);
+  animation: dashRise 0.35s ease both;
+}
+.dash-kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--kpi-accent, var(--primary));
+  opacity: 0.85;
+}
+.dash-kpi-card:hover {
+  transform: translateY(-4px) scale(1.012);
+  box-shadow: var(--shadow-lg);
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border));
+}
+.dash-kpi-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 5%, transparent), transparent 60%);
+  opacity: 0;
+  transition: opacity var(--dash-transition);
+  pointer-events: none;
+}
+.dash-kpi-card:hover::after { opacity: 1; }
+
+/* ---------- Grid system ---------- */
+.dash-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 16px;
+}
+@media (min-width: 640px) { .dash-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .dash-kpi-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }

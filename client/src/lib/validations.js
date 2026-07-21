@@ -142,47 +142,91 @@ export const accountSchema = z.object({
   tags: z.array(z.string()).optional(),
 });
 
+export const contactSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  // Allow "" so an untouched optional field doesn't fail validation.
+  email: z.string().email("Invalid email").optional().or(z.literal("")),
+  phone: z.string().optional(),
+  jobTitle: z.string().optional(),
+  department: z.string().optional(),
+  notes: z.string().optional(),
+  // "" from an empty <select> would fail a UUID FK — coerce blank to undefined
+  accountId: z.preprocess((v) => (v === "" ? undefined : v), z.string().uuid().optional()),
+  assignedToId: z.preprocess((v) => (v === "" ? undefined : v), z.string().uuid().optional()),
+});
+
 export const opportunitySchema = z.object({
-  name: z.string().min(1, "Opportunity name is required"),
+  name: z
+    .string()
+    .trim()
+    .min(
+      1,
+      "Opportunity name is required"
+    ),
 
   accountId: z.preprocess(
-    (v) => (v === "" ? undefined : v),
-    z.string().uuid().optional(),
-  ),
-
-  contactId: z.preprocess(
-    (v) => (v === "" ? undefined : v),
-    z.string().uuid().optional(),
+    (value) =>
+      value === ""
+        ? undefined
+        : value,
+    z.string().uuid().optional()
   ),
 
   assignedToId: z.preprocess(
-    (v) => (v === "" ? undefined : v),
-    z.string().uuid().optional(),
+    (value) =>
+      value === ""
+        ? undefined
+        : value,
+    z.string().uuid().optional()
   ),
 
-  stage: z.string().optional(),
+  stage: z
+    .enum([
+      "Prospecting",
+      "Qualification",
+      "Needs Analysis",
+      "Value Proposition",
+      "Decision Makers",
+      "Perception Analysis",
+      "Proposal/Price",
+      "Negotiation/Review",
+      "Closed Won",
+      "Closed Lost",
+    ])
+    .optional(),
 
-  probability: z.coerce.number().min(0).max(100).optional(),
+  value: z.coerce
+    .number()
+    .min(
+      0,
+      "Value cannot be negative"
+    )
+    .optional(),
 
-  amount: z.coerce.number().min(0).optional(),
+  probability: z.coerce
+    .number()
+    .min(
+      0,
+      "Probability cannot be below 0"
+    )
+    .max(
+      100,
+      "Probability cannot exceed 100"
+    )
+    .optional(),
 
-  expectedRevenue: z.coerce.number().min(0).optional(),
+  closeDate: z
+    .string()
+    .optional(),
 
-  expectedCloseDate: z.string().optional(),
+  source: z
+    .string()
+    .optional(),
 
-  leadSource: z.string().optional(),
-
-  forecastCategory: z.string().optional(),
-
-  competitor: z.string().optional(),
-
-  currency: z.string().optional(),
-
-  priority: z.string().optional(),
-
-  status: z.string().optional(),
-
-  description: z.string().optional(),
+  description: z
+    .string()
+    .optional(),
 });
 
 export const projectSchema = z.object({

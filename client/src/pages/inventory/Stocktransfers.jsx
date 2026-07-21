@@ -112,7 +112,7 @@ export default function StockTransfers() {
 
   return (
     <div className="animate-fade-in">
-      <div className="page-header">
+      <div className="page-header flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-6 py-4">
         <div>
           <h1
             className="text-[18px] font-bold"
@@ -126,7 +126,7 @@ export default function StockTransfers() {
           </p>
         </div>
 
-        <button className="btn btn-primary" onClick={() => setModalOpen(true)}>
+        <button className="btn btn-primary w-full sm:w-auto justify-center" onClick={() => setModalOpen(true)}>
           <Plus size={15} />
           New Transfer
         </button>
@@ -143,7 +143,7 @@ export default function StockTransfers() {
         }
       />
 
-      <div className="mx-6 mb-6 card overflow-hidden">
+      <div className="mx-3 sm:mx-6 mb-6 card overflow-hidden">
         <DataTable
           columns={columns}
           data={data}
@@ -155,6 +155,25 @@ export default function StockTransfers() {
           onPageChange={() => {}}
           emptyTitle="No Transfers"
           emptyDescription="Create your first stock transfer."
+          mobileCard={(row) => (
+            <div>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>
+                  {row.referenceNo}
+                </p>
+                <Badge variant={row.status === "Completed" ? "success" : "gray"}>{row.status}</Badge>
+              </div>
+              <p className="text-[12px] mt-0.5" style={{ color: "var(--text-secondary)" }}>
+                {row.item?.name || "—"}
+              </p>
+              <div className="flex items-center gap-1.5 mt-1.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
+                <span className="truncate">{row.fromWarehouse?.name || "—"}</span>
+                <ArrowRightLeft size={11} className="flex-shrink-0" />
+                <span className="truncate">{row.toWarehouse?.name || "—"}</span>
+                <span className="ml-auto flex-shrink-0">Qty {row.quantity}</span>
+              </div>
+            </div>
+          )}
         />
       </div>
 
@@ -169,7 +188,7 @@ export default function StockTransfers() {
         loading={createMutation.isPending}
         onSubmit={handleSubmit((formData) => createMutation.mutate(formData))}
       >
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="form-group col-span-2">
             <label className="form-label">Inventory Item *</label>
 

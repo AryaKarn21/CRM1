@@ -301,7 +301,7 @@ export default function Assets() {
 
   return (
     <div className="animate-fade-in">
-      <div className="page-header">
+      <div className="page-header flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-6 py-4">
         <div>
           <h1
             className="text-[18px] font-bold"
@@ -323,7 +323,7 @@ export default function Assets() {
         </div>
 
         <button
-          className="btn btn-primary"
+          className="btn btn-primary w-full sm:w-auto justify-center"
           onClick={() => {
             setEditingAsset(null);
             reset();
@@ -356,7 +356,7 @@ export default function Assets() {
         }
       />
 
-      <div className="mx-6 mb-6 card overflow-hidden">
+      <div className="mx-3 sm:mx-6 mb-6 card overflow-hidden">
         <DataTable
           columns={columns}
           data={data || []}
@@ -373,6 +373,83 @@ export default function Assets() {
           }
           emptyTitle="No Assets"
           emptyDescription="Create your first asset."
+          mobileCard={(row) => (
+            <div className="flex items-start gap-3">
+              <div
+                className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: "var(--primary-bg)" }}
+              >
+                <Laptop size={16} style={{ color: "var(--primary)" }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[13px] font-semibold truncate" style={{ color: "var(--text-primary)" }}>
+                    {row.name}
+                  </p>
+                  <Badge
+                    variant={
+                      row.status === "available"
+                        ? "success"
+                        : row.status === "maintenance"
+                          ? "warning"
+                          : row.status === "retired"
+                            ? "gray"
+                            : "primary"
+                    }
+                  >
+                    {row.status}
+                  </Badge>
+                </div>
+                <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                  {row.assetCode || "—"} · {row.category || "Uncategorized"}
+                </p>
+                <p className="text-[11px] mt-0.5" style={{ color: "var(--text-muted)" }}>
+                  {row.brand || "—"} {row.model ? `· ${row.model}` : ""}
+                  {row.purchasePrice ? ` · NPR ${row.purchasePrice}` : ""}
+                </p>
+                {row.assignedTo && (
+                  <p className="text-[11px] mt-0.5" style={{ color: "var(--text-secondary)" }}>
+                    Assigned to {row.assignedTo.firstName} {row.assignedTo.lastName}
+                  </p>
+                )}
+                <div className="flex items-center gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => {
+                      setEditingAsset(row);
+                      reset({
+                        assetCode: row.assetCode || "",
+                        name: row.name || "",
+                        category: row.category || "",
+                        brand: row.brand || "",
+                        model: row.model || "",
+                        serialNumber: row.serialNumber || "",
+                        warehouseId: row.warehouseId || "",
+                        purchaseDate: row.purchaseDate || "",
+                        purchasePrice: row.purchasePrice || 0,
+                        warrantyExpiry: row.warrantyExpiry || "",
+                        status: row.status || "available",
+                        description: row.description || "",
+                      });
+                      setModalOpen(true);
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-sm text-red-500"
+                    onClick={() => {
+                      if (window.confirm("Delete this asset?")) {
+                        deleteMutation.mutate(row.id);
+                      }
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         />
       </div>
 
@@ -398,7 +475,7 @@ export default function Assets() {
           }
         })}
       >
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="form-group col-span-2">
             <label className="form-label">Asset Name *</label>
 
@@ -449,7 +526,7 @@ export default function Assets() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Warehouse */}
             <div className="form-group">
               <label className="form-label">Warehouse</label>
