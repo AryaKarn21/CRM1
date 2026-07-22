@@ -4,8 +4,6 @@ import { Project, ProjectMember, Task, User } from '../models/index.js'
 import { protect } from '../middleware/auth.js'
 
 const router = express.Router()
-//const getCompany = (req) => req.headers['x-company-id'] || null
-// ✅ New Code (Replace line 7 with this)
 const getCompany = (req) => req.headers['x-company-id'] || req.headers['x-company-id'] || req.get('X-Company-ID') || null
 router.get('/', protect, async (req, res, next) => {
   try {

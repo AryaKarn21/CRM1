@@ -87,15 +87,15 @@ export const protect = async (req, res, next) => {
 
 export const authorize =
   (...roles) =>
-  (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
-        message: "Access denied",
-      });
-    }
+    (req, res, next) => {
+      if (!roles.includes(req.user.role)) {
+        return res.status(403).json({
+          message: "Access denied",
+        });
+      }
 
-    next();
-  };
+      next();
+    };
 
 /*
 |--------------------------------------------------------------------------
@@ -105,21 +105,47 @@ export const authorize =
 
 export const authorizePermission =
   (permission) =>
-  (req, res, next) => {
-    // Super Admin bypass
-    if (req.user.role === "super_admin") {
-      return next();
-    }
+    (req, res, next) => {
 
-    const permissions = req.permissions || {};
+      // Super Admin bypass
+      if (req.user.role === "super_admin") {
+        return next();
+      }
 
-    const [module, action] = permission.split(".");
+      let permissions = req.permissions || {};
 
-    if (permissions?.[module]?.[action]) {
-      return next();
-    }
+      // Parse JSON string if needed
+      if (typeof permissions === "string") {
+        try {
+          permissions = JSON.parse(permissions);
+        } catch (err) {
+          return res.status(500).json({
+            message: "Invalid permissions format.",
+          });
+        }
+      }
 
-    return res.status(403).json({
-      message: "You do not have permission to perform this action.",
-    });
-  };
+      const parts = permission.split(".");
+      const module = parts[0];
+
+      // Current database format
+      if (permissions[module] === true) {
+        return next();
+      }
+
+      // Future nested format
+      let current = permissions;
+
+      for (const part of parts) {
+        if (current == null) break;
+        current = current[part];
+      }
+
+      if (current === true) {
+        return next();
+      }
+
+      return res.status(403).json({
+        message: "You do not have permission to perform this action.",
+      });
+    };

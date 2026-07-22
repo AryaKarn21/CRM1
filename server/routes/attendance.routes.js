@@ -6,7 +6,7 @@ import { protect } from "../middleware/auth.js";
 import { createNotification } from "../services/notification.service.js";
 const router = express.Router();
 
-const getCompany = (req) => req.companyId;
+const getCompany = (req) => req.companyId || req.headers['x-company-id'] || req.headers['x-company-id'] || req.get('X-Company-ID');
 
 router.get("/", protect, async (req, res, next) => {
   try {

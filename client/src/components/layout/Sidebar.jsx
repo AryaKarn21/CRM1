@@ -12,61 +12,170 @@ import { useAuthStore } from '@/store/auth.store'
 import { cn, getInitials } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import CompanySwitcher from './CompanySwitcher'
+import usePermission from '@/hooks/usePermission'
 
 const NAV = [
-  { label: 'Dashboard', icon: LayoutDashboard, to: '/' },
   {
-    label: 'CRM & Sales', icon: TrendingUp, children: [
-      { label: 'Leads', to: '/crm/leads' },
-      { label: 'Accounts', to: '/crm/accounts' },
-      { label: 'Contacts', to: '/crm/contacts' },
-      { label: 'Opportunities', to: '/crm/opportunities' },
-    ]
+    label: 'Dashboard',
+    icon: LayoutDashboard,
+    to: '/',
+    permission: 'dashboard.view',
   },
-  {
-  label: "Calendar & Meetings",
-  icon: Calendar,
-  children: [
-    {
-      label: "Calendar",
-      to: "/calendar",
-    },
-    
-  ],
-},
-  {
-    label: 'Human Resources', icon: Users, children: [
-      { label: 'Employees', to: '/hr/employees' },
-      { label: 'Attendance', to: '/hr/attendance' },
-      { label: 'Leave Management', to: '/hr/leaves' },
-      { label: 'Payroll', to: '/hr/payroll' },
-    ]
-  },
-  {
-    label: 'Finance', icon: DollarSign, children: [
-      { label: 'Overview', to: '/finance' },
-      { label: 'Expenses', to: '/finance/expenses' },
-      { label: 'General Ledger', to: '/finance/ledger' },
-    ]
-  },
- {
-  label: 'Inventory',
-  icon: Package,
-  children: [
-    { label: 'Items', to: '/inventory' },
-    { label: 'Warehouses', to: '/inventory/warehouses' },
-    { label: 'Assets', to: '/inventory/assets' },
-    { label: 'Stock Transfers', to: '/inventory/transfers' },
-    { label: 'Stock Adjustments', to: '/inventory/adjustments' },
-  ]
-},
 
+  {
+    label: 'CRM & Sales',
+    icon: TrendingUp,
+    children: [
+      {
+        label: 'Leads',
+        to: '/crm/leads',
+        permission: 'leads.view',
+      },
+      {
+        label: 'Accounts',
+        to: '/crm/accounts',
+        permission: 'accounts.view',
+      },
+      {
+        label: 'Contacts',
+        to: '/crm/contacts',
+        permission: 'contacts.view',
+      },
+      {
+        label: 'Opportunities',
+        to: '/crm/opportunities',
+        permission: 'opportunities.view',
+      },
+    ],
+  },
 
-  { label: 'Procurement', icon: ShoppingCart, to: '/procurement' },
-  { label: 'Projects', icon: FolderKanban, to: '/projects' },
-  { label: 'Support', icon: Headphones, to: '/support' },
-  { label: 'Analytics', icon: BarChart3, to: '/reports' },
-  { label: 'Settings', icon: Settings, to: '/settings' },
+  {
+    label: 'Calendar & Meetings',
+    icon: Calendar,
+    children: [
+      {
+        label: 'Calendar',
+        to: '/calendar',
+        permission: 'calendar.view',
+      },
+    ],
+  },
+
+  {
+    label: 'Human Resources',
+    icon: Users,
+    children: [
+      {
+        label: 'Employees',
+        to: '/hr/employees',
+        permission: 'employees.view',
+      },
+      {
+        label: 'Attendance',
+        to: '/hr/attendance',
+        permission: 'attendance.view',
+      },
+      {
+        label: 'Leave Management',
+        to: '/hr/leaves',
+        permission: 'leave.view',
+      },
+      {
+        label: 'Payroll',
+        to: '/hr/payroll',
+        permission: 'payroll.view',
+      },
+    ],
+  },
+
+  {
+    label: 'Finance',
+    icon: DollarSign,
+    children: [
+      {
+        label: 'Overview',
+        to: '/finance',
+        permission: 'finance.view',
+      },
+      {
+        label: 'Expenses',
+        to: '/finance/expenses',
+        permission: 'expenses.view',
+      },
+      {
+        label: 'General Ledger',
+        to: '/finance/ledger',
+        permission: 'ledger.view',
+      },
+    ],
+  },
+
+  {
+    label: 'Inventory',
+    icon: Package,
+    children: [
+      {
+        label: 'Items',
+        to: '/inventory',
+        permission: 'inventory.view',
+      },
+      {
+        label: 'Warehouses',
+        to: '/inventory/warehouses',
+        permission: 'warehouse.view',
+      },
+      {
+        label: 'Assets',
+        to: '/inventory/assets',
+        permission: 'assets.view',
+      },
+      {
+        label: 'Stock Transfers',
+        to: '/inventory/transfers',
+        permission: 'transfers.view',
+      },
+      {
+        label: 'Stock Adjustments',
+        to: '/inventory/adjustments',
+        permission: 'adjustments.view',
+      },
+    ],
+  },
+
+  {
+    label: 'Procurement',
+    icon: ShoppingCart,
+    to: '/procurement',
+    permission: 'procurement.view',
+  },
+
+  {
+    label: 'Projects',
+    icon: FolderKanban,
+    to: '/projects',
+    permission: 'projects.view',
+  },
+
+  {
+    label: 'Support',
+    icon: Headphones,
+    to: '/support',
+    permission: 'support.view',
+  },
+
+  {
+    label: 'Analytics',
+    icon: BarChart3,
+    to: '/reports',
+    permission: 'analytics.view',
+  },
+
+  {
+    label: 'Settings',
+    icon: Settings,
+    to: '/settings',
+    permission: 'settings.view',
+  },
 ]
 
 function NavGroup({ item, collapsed }) {
@@ -120,6 +229,32 @@ export default function Sidebar() {
   const { user } = useAuthStore()
   const isMobile = useIsMobile()
   const location = useLocation()
+  const { hasPermission } = usePermission()
+
+  const filteredNav = NAV.reduce((result, item) => {
+    // Single menu item (Dashboard, Procurement, etc.)
+    if (!item.children) {
+      if (hasPermission(item.permission)) {
+        result.push(item)
+      }
+      return result
+    }
+
+    // Menu group (CRM, HR, Finance...)
+    const children = item.children.filter(child =>
+      hasPermission(child.permission)
+    )
+
+    // Only show group if at least one child is visible
+    if (children.length > 0) {
+      result.push({
+        ...item,
+        children,
+      })
+    }
+
+    return result
+  }, [])
 
   // Close the drawer on every navigation instead of leaving it open over
   // the new page — the previous version had no mobile awareness at all,
@@ -194,7 +329,7 @@ export default function Sidebar() {
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto px-2 py-3 flex flex-col gap-0.5 scrollbar-none">
-          {NAV.map((item) =>
+          {filteredNav.map((item) =>
             item.children ? (
               <NavGroup key={item.label} item={item} collapsed={collapsed} />
             ) : (

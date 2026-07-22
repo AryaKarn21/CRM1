@@ -1,14 +1,13 @@
 import express from "express";
 import { Op } from "sequelize";
 import { Lead, LeadNote, User } from "../models/index.js";
-import { protect } from "../middleware/auth.js";
+import { authorizePermission, protect } from "../middleware/auth.js";
 import { createNotification } from "../services/notification.service.js";
 
 const router = express.Router();
 
-
 // GET /api/leads
-router.get("/", protect, async (req, res, next) => {
+router.get("/", protect, authorizePermission('leads.view'), async (req, res, next) => {
   try {
     const company = req.companyId;
     const {
@@ -53,12 +52,12 @@ router.get("/", protect, async (req, res, next) => {
 });
 
 // GET /api/leads/new — prevent 'new' from being treated as an ID
-router.get("/new", protect, (req, res) => {
+router.get("/new", protect, authorizePermission('leads.view'), (req, res) => {
   res.json({ lead: null });
 });
 
 // GET /api/leads/:id
-router.get("/:id", protect, async (req, res, next) => {
+router.get("/:id", protect, authorizePermission('leads.view'), async (req, res, next) => {
   try {
     const lead = await Lead.findByPk(req.params.id, {
       include: [
@@ -74,7 +73,7 @@ router.get("/:id", protect, async (req, res, next) => {
 
 // POST /api/leads
 // POST /api/leads
-router.post("/", protect, async (req, res, next) => {
+router.post("/", protect, authorizePermission('leads.view'), async (req, res, next) => {
   try {
      const company = req.companyId;
     const { notes, ...leadData } = req.body;
@@ -157,7 +156,7 @@ router.post("/", protect, async (req, res, next) => {
 });
 
 // PATCH /api/leads/:id
-router.patch("/:id", protect, async (req, res, next) => {
+router.patch("/:id", protect, authorizePermission('leads.view'), async (req, res, next) => {
   try {
     const lead = await Lead.findByPk(req.params.id);
     if (!lead) return res.status(404).json({ message: "Lead not found" });
@@ -174,7 +173,7 @@ router.patch("/:id", protect, async (req, res, next) => {
 });
 
 // PATCH /api/leads/:id/stage
-router.patch("/:id/stage", protect, async (req, res, next) => {
+router.patch("/:id/stage", protect, authorizePermission('leads.view'), async (req, res, next) => {
   try {
     const lead = await Lead.findByPk(req.params.id);
     if (!lead) return res.status(404).json({ message: "Lead not found" });
@@ -186,7 +185,7 @@ router.patch("/:id/stage", protect, async (req, res, next) => {
 });
 
 // DELETE /api/leads/:id
-router.delete("/:id", protect, async (req, res, next) => {
+router.delete("/:id", protect, authorizePermission('leads.view'), async (req, res, next) => {
   try {
     await Lead.destroy({ where: { id: req.params.id } });
     res.json({ message: "Lead deleted" });
@@ -196,7 +195,7 @@ router.delete("/:id", protect, async (req, res, next) => {
 });
 
 // POST /api/leads/:id/notes
-router.post("/:id/notes", protect, async (req, res, next) => {
+router.post("/:id/notes", protect, authorizePermission('leads.view'), async (req, res, next) => {
   try {
     const lead = await Lead.findByPk(req.params.id);
     if (!lead) return res.status(404).json({ message: "Lead not found" });
@@ -213,7 +212,7 @@ router.post("/:id/notes", protect, async (req, res, next) => {
 });
 
 // GET /api/leads/:id/timeline
-router.get("/:id/timeline", protect, async (req, res, next) => {
+router.get("/:id/timeline", protect, authorizePermission('leads.view'), async (req, res, next) => {
   try {
     const lead = await Lead.findByPk(req.params.id, {
       include: [

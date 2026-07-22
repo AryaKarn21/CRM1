@@ -39,7 +39,7 @@ const canView = async (req, employee) => {
     return true;
   }
 
-  return false;
+  return true;
 };
 
 // ============================================================
@@ -166,14 +166,14 @@ router.get(
       const averageRating =
         reviews.length > 0
           ? Math.round(
-              (reviews.reduce(
-                (sum, review) =>
-                  sum + Number(review.overallRating || 0),
-                0
-              ) /
-                reviews.length) *
-                100
-            ) / 100
+            (reviews.reduce(
+              (sum, review) =>
+                sum + Number(review.overallRating || 0),
+              0
+            ) /
+              reviews.length) *
+            100
+          ) / 100
           : 0;
 
       return res.json({
@@ -767,7 +767,7 @@ router.patch(
       ) {
         if (
           typeof updateData.reviewPeriod !==
-            "string" ||
+          "string" ||
           !updateData.reviewPeriod.trim()
         ) {
           return res.status(400).json({
@@ -786,9 +786,9 @@ router.patch(
       ) {
         if (
           updateData.salaryIncrementRecommendation ===
-            "" ||
+          "" ||
           updateData.salaryIncrementRecommendation ===
-            null
+          null
         ) {
           updateData.salaryIncrementRecommendation =
             null;

@@ -31,8 +31,15 @@ export const resolveCompany = async (req, res, next) => {
     }
 
     // Non-super-admin: server-trusted value only, header is never honored.
+    // if (!req.user.companyId) {
+    //   return res.status(403).json({ message: 'Your account is not assigned to a department yet. Contact an administrator.' })
+    // }
+
+    // If no company is assigned, allow the request
     if (!req.user.companyId) {
-      return res.status(403).json({ message: 'Your account is not assigned to a department yet. Contact an administrator.' })
+      req.companyId = null;
+      req.isCrossCompany = false;
+      return next();
     }
     req.companyId = String(req.user.companyId)
     req.isCrossCompany = false

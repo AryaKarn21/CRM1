@@ -1,6 +1,6 @@
 import { useAuthStore } from "@/store/auth.store";
 
-export function usePermission() {
+export default function usePermission() {
   const { user } = useAuthStore();
 
   const role = user?.role;
@@ -15,9 +15,15 @@ export function usePermission() {
     // Super Admin bypass
     if (role === "super_admin") return true;
 
-    const [module, action] = permission.split(".");
+    let permissions = user?.permissions || {};
 
-    return !!permissions?.[module]?.[action];
+    if (typeof permissions === "string") {
+      permissions = JSON.parse(permissions);
+    }
+
+    const module = permission.split(".")[0];
+
+    return permissions[module] === true;
   };
 
   return {

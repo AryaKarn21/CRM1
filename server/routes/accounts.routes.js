@@ -1,7 +1,7 @@
 import express from "express";
 import { Op } from "sequelize";
 import { Account, Contact, Opportunity, User } from "../models/index.js";
-import { protect } from "../middleware/auth.js";
+import { authorizePermission, protect } from "../middleware/auth.js";
 import { createNotification } from "../services/notification.service.js";
 
 import multer from "multer";
@@ -12,7 +12,7 @@ const uploadAccountsCsv = multer({
 
 const router = express.Router();
 
-router.get("/", protect, async (req, res, next) => {
+router.get("/", protect, authorizePermission("accounts.view"), async (req, res, next) => {
   try {
     const company = req.companyId;
     const {
@@ -93,7 +93,7 @@ const toNumber = (v) => (v === "" || v == null ? null : Number(v));
 // ═════════════════════════════════════════════════════════════
 // EXPORT — must be declared BEFORE "/:id" or "export" reads as an :id
 // ═════════════════════════════════════════════════════════════
-router.get("/export", protect, async (req, res, next) => {
+router.get("/export", protect, authorizePermission('accounts.view'), async (req, res, next) => {
   try {
     const where = {};
     if (req.companyId) where.companyId = req.companyId;
@@ -121,7 +121,7 @@ router.get("/export", protect, async (req, res, next) => {
 // IMPORT — validates + de-duplicates each row; one bad row never
 // aborts the batch. Returns a row-by-row report.
 // ═════════════════════════════════════════════════════════════
-router.post("/import", protect, uploadAccountsCsv.single("file"), async (req, res, next) => {
+router.post("/import", protect, authorizePermission('accounts.view'), uploadAccountsCsv.single("file"), async (req, res, next) => {
   try {
     if (!req.companyId) {
       return res.status(400).json({ message: "Select a company before importing." });
@@ -219,7 +219,7 @@ router.post("/import", protect, uploadAccountsCsv.single("file"), async (req, re
   }
 });
 
-router.get("/:id", protect, async (req, res, next) => {
+router.get("/:id", protect, authorizePermission('accounts.view'), async (req, res, next) => {
   try {
     const account = await Account.findByPk(req.params.id, {
       include: [{ model: User, as: "assignedTo", attributes: ["id", "name"] }],
@@ -230,7 +230,7 @@ router.get("/:id", protect, async (req, res, next) => {
     next(err);
   }
 });
-router.post("/", protect, async (req, res, next) => {
+router.post("/", protect, authorizePermission('accounts.view'), async (req, res, next) => {
   try {
     const account = await Account.create({
       ...req.body,
@@ -264,7 +264,7 @@ router.post("/", protect, async (req, res, next) => {
   }
 });
 console.log("Assignment notification created.");
-router.patch("/:id", protect, async (req, res, next) => {
+router.patch("/:id", protect, authorizePermission('accounts.view'), async (req, res, next) => {
   try {
     const account = await Account.findByPk(req.params.id);
 
@@ -333,7 +333,7 @@ router.patch("/:id", protect, async (req, res, next) => {
   }
 });
 
-router.delete("/:id", protect, async (req, res, next) => {
+router.delete("/:id", protect, authorizePermission('accounts.view'), async (req, res, next) => {
   try {
     const account = await Account.findByPk(req.params.id);
 
@@ -373,7 +373,7 @@ router.delete("/:id", protect, async (req, res, next) => {
   }
 });
 
-router.get("/:id/contacts", protect, async (req, res, next) => {
+router.get("/:id/contacts", protect, authorizePermission('accounts.view'), async (req, res, next) => {
   try {
     const contacts = await Contact.findAll({
       where: { accountId: req.params.id },
@@ -384,7 +384,7 @@ router.get("/:id/contacts", protect, async (req, res, next) => {
   }
 });
 
-router.get("/:id/opportunities", protect, async (req, res, next) => {
+router.get("/:id/opportunities", protect, authorizePermission('accounts.view'), async (req, res, next) => {
   try {
     const opportunities = await Opportunity.findAll({
       where: { accountId: req.params.id },
@@ -395,7 +395,7 @@ router.get("/:id/opportunities", protect, async (req, res, next) => {
   }
 });
 
-router.get("/:id/timeline", protect, async (req, res, next) => {
+router.get("/:id/timeline", protect, authorizePermission('accounts.view'), async (req, res, next) => {
   res.json({ items: [] });
 });
 
