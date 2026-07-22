@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
@@ -11,6 +11,19 @@ export default function UserEdit() {
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const [companies, setCompanies] = useState([])
+
+  const { data: companiesData } = useQuery({
+    queryKey: ['companies'],
+    queryFn: () =>
+      settingsAPI.getCompanies().then((res) => res.data),
+  })
+
+  useEffect(() => {
+    if (companiesData) {
+      setCompanies(companiesData)
+    }
+  }, [companiesData])
 
   // Load User
   const { data: user, isLoading } = useQuery({
@@ -30,6 +43,8 @@ export default function UserEdit() {
       email: '',
       phone: '',
       role: 'employee',
+      primaryCompany: '',
+      companies: [],
     },
   })
 
@@ -41,6 +56,9 @@ export default function UserEdit() {
         email: user.email || '',
         phone: user.phone || '',
         role: user.role || 'employee',
+        primaryCompany: user.company?.id || '',
+        companies:
+          user.companies?.map((company) => company.id) || [],
       })
     }
   }, [user, reset])
@@ -66,7 +84,7 @@ export default function UserEdit() {
     onError: (err) => {
       toast.error(
         err.response?.data?.message ||
-          'Failed to update user'
+        'Failed to update user'
       )
     },
   })
@@ -216,6 +234,53 @@ export default function UserEdit() {
 
           </div>
 
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">
+            Primary Company
+          </label>
+
+          <select
+            className="input"
+            {...register("primaryCompany")}
+          >
+            <option value="">
+              Select Company
+            </option>
+
+            {companies.map((company) => (
+              <option
+                key={company.id}
+                value={company.id}
+              >
+                {company.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">
+            Accessible Companies
+          </label>
+
+          <div className="flex flex-col gap-2">
+            {companies.map((company) => (
+              <label
+                key={company.id}
+                className="flex items-center gap-2"
+              >
+                <input
+                  type="checkbox"
+                  value={company.id}
+                  {...register("companies")}
+                />
+
+                {company.name}
+              </label>
+            ))}
+          </div>
         </div>
 
         <div className="flex justify-end gap-3">

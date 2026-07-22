@@ -21,13 +21,7 @@ router.post(
   authorize('super_admin'),
   async (req, res, next) => {
     try {
-      console.log("========== CREATE COMPANY ==========");
-      console.log("REQ USER:", req.user);
-
       const company = await Company.create(req.body);
-
-      console.log("COMPANY CREATED:");
-      console.log(company.toJSON());
 
       const relation = await UserCompany.create({
         userId: req.user.id,
@@ -66,8 +60,13 @@ router.get(
         include: [
           {
             model: Company,
-            as: 'companies',
-            attributes: ['id', 'name'],
+            as: "company",
+            attributes: ["id", "name"],
+          },
+          {
+            model: Company,
+            as: "companies",
+            attributes: ["id", "name"],
           },
         ],
         order: [['name', 'ASC']],
@@ -92,8 +91,13 @@ router.get(
         include: [
           {
             model: Company,
-            as: 'companies',
-            attributes: ['id', 'name'],
+            as: "company",
+            attributes: ["id", "name"],
+          },
+          {
+            model: Company,
+            as: "companies",
+            attributes: ["id", "name"],
           },
         ],
       })
@@ -112,22 +116,35 @@ router.get(
 )
 router.post('/users', protect, authorize('super_admin', 'admin'), async (req, res, next) => {
   try {
-    const { companies = [], ...userData } = req.body
+    const {
+      companies = [],
+      primaryCompany,
+      ...userData
+    } = req.body;
     const exists = await User.findOne({
-    where: {
+      where: {
         email: userData.email
-    }
-})
-
-if (exists) {
-    return res.status(400).json({
-        message: 'Email already exists'
+      }
     })
-}
+
+    if (exists) {
+      return res.status(400).json({
+        message: 'Email already exists'
+      })
+    }
+
+    // Store primary company in users table
+    userData.companyId = primaryCompany;
+
     const user = await User.create(userData)
-    
+
     if (companies.length) {
-      await UserCompany.bulkCreate(companies.map(companyId => ({ userId: user.id, companyId })))
+      await UserCompany.bulkCreate(
+        companies.map(companyId => ({
+          userId: user.id,
+          companyId,
+        }))
+      );
     }
     res.status(201).json(user)
   } catch (err) { next(err) }
@@ -140,7 +157,13 @@ router.patch('/users/:id', protect, authorize('super_admin', 'admin'), async (re
       return res.status(404).json({ message: 'User not found' })
     }
 
-    const { companies, ...rest } = req.body
+    const {
+      companies,
+      primaryCompany,
+      ...rest
+    } = req.body;
+
+    rest.companyId = primaryCompany;
 
     await user.update(rest)
 
