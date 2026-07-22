@@ -56,70 +56,112 @@ export default function ActivityCard({ user }) {
   ];
 
   return (
-    <div className="rounded-xl border bg-white dark:bg-gray-900 shadow-sm">
-      <div className="border-b px-6 py-4">
+    <div
+      className="rounded-xl border overflow-hidden"
+      style={{
+        background: "var(--surface)",
+        borderColor: "var(--border)",
+      }}
+    >
+      {/* Header */}
+      <div
+        className="px-5 py-4 border-b"
+        style={{ borderColor: "var(--border)" }}
+      >
         <div className="flex items-center gap-2">
-          <Activity className="h-5 w-5 text-primary" />
+          <Activity
+            size={18}
+            style={{ color: "var(--primary)" }}
+          />
 
-          <h2 className="text-lg font-semibold">
+          <h2
+            className="text-[16px] font-semibold"
+            style={{ color: "var(--text-primary)" }}
+          >
             Recent Activity
           </h2>
         </div>
 
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p
+          className="mt-1 text-[13px]"
+          style={{ color: "var(--text-muted)" }}
+        >
           Recent account activity and security history.
         </p>
       </div>
 
-      <div className="divide-y">
-
+      {/* Activity List */}
+      <div>
         {activities.map((item, index) => {
           const Icon = item.icon;
 
           return (
             <div
               key={index}
-              className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 px-6 py-5"
+              className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 px-5 py-4 border-b last:border-b-0"
+              style={{
+                borderColor: "var(--border)",
+              }}
             >
-              <div className="flex items-start gap-4">
-
-                <div className="rounded-lg bg-primary/10 p-3">
-                  <Icon className="h-5 w-5 text-primary" />
+              <div className="flex items-center gap-4">
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center"
+                  style={{
+                    background: "var(--surface-2)",
+                  }}
+                >
+                  <Icon
+                    size={18}
+                    style={{ color: "var(--primary)" }}
+                  />
                 </div>
 
                 <div>
-                  <h4 className="font-medium">
+                  <p
+                    className="text-[14px] font-medium"
+                    style={{ color: "var(--text-primary)" }}
+                  >
                     {item.title}
-                  </h4>
+                  </p>
 
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p
+                    className="text-[13px] mt-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
                     {item.value}
                   </p>
                 </div>
-
               </div>
 
-              <Badge>
+              <Badge variant="primary">
                 {item.badge}
               </Badge>
-
             </div>
           );
         })}
-
       </div>
 
-      <div className="border-t px-6 py-4 flex items-center justify-between">
-
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Clock className="h-4 w-4" />
+      {/* Footer */}
+      <div
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4 border-t"
+        style={{
+          borderColor: "var(--border)",
+        }}
+      >
+        <div
+          className="flex items-center gap-2 text-[13px]"
+          style={{ color: "var(--text-muted)" }}
+        >
+          <Clock size={15} />
           Activity history is retained for security auditing.
         </div>
 
-        <button className="text-primary text-sm font-medium hover:underline">
+        <button
+          className="text-[13px] font-medium transition-colors"
+          style={{ color: "var(--primary)" }}
+        >
           View Full Activity Log
         </button>
-
       </div>
     </div>
   );

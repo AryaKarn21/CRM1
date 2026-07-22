@@ -111,9 +111,8 @@ function describeChanges(action, changes) {
     case "manager_assigned":
       return changes.managerName || "Removed";
     case "performance_review_created":
-      return `${changes.reviewPeriod || ""}${
-        changes.overallRating != null ? ` · Rating ${changes.overallRating}/5` : ""
-      }`;
+      return `${changes.reviewPeriod || ""}${changes.overallRating != null ? ` · Rating ${changes.overallRating}/5` : ""
+        }`;
     case "document_uploaded":
       return changes.name || null;
     case "daily_report_submitted":
@@ -212,11 +211,11 @@ export default function EmployeeDetail() {
     enabled: activeTab === "documents" || docModalOpen,
   });
 
-  const { data: performanceData } = useQuery({
-    queryKey: ["employee-performance", id],
-    queryFn: async () => (await performanceAPI.getByEmployee(id)).data,
-    enabled: activeTab === "performance",
-  });
+  // const { data: performanceData } = useQuery({
+  //   queryKey: ["employee-performance", id],
+  //   queryFn: async () => (await performanceAPI.getByEmployee(id)).data,
+  //   enabled: activeTab === "performance",
+  // });
 
   const { data: timelineData } = useQuery({
     queryKey: ["employee-timeline", id],
@@ -270,18 +269,18 @@ export default function EmployeeDetail() {
     onError: (err) => toast.error(err?.response?.data?.message || "Failed to update shift"),
   });
 
-  const createReview = useMutation({
-    mutationFn: (data) => performanceAPI.create({ ...data, employeeId: id }),
-    onSuccess: () => {
-      toast.success("Performance review added");
-      queryClient.invalidateQueries({ queryKey: ["employee-performance", id] });
-      queryClient.invalidateQueries({ queryKey: ["employee-dashboard-stats", id] });
-      queryClient.invalidateQueries({ queryKey: ["employee-timeline", id] });
-      setReviewModalOpen(false);
-      setReviewForm(emptyReview);
-    },
-    onError: (err) => toast.error(err?.response?.data?.message || "Failed to add review"),
-  });
+  // const createReview = useMutation({
+  //   mutationFn: (data) => performanceAPI.create({ ...data, employeeId: id }),
+  //   onSuccess: () => {
+  //     toast.success("Performance review added");
+  //     queryClient.invalidateQueries({ queryKey: ["employee-performance", id] });
+  //     queryClient.invalidateQueries({ queryKey: ["employee-dashboard-stats", id] });
+  //     queryClient.invalidateQueries({ queryKey: ["employee-timeline", id] });
+  //     setReviewModalOpen(false);
+  //     setReviewForm(emptyReview);
+  //   },
+  //   onError: (err) => toast.error(err?.response?.data?.message || "Failed to add review"),
+  // });
 
   const addReport = useMutation({
     mutationFn: (data) => employeesAPI.addDailyReport(id, data),
@@ -457,10 +456,10 @@ export default function EmployeeDetail() {
                 >
                   <Download size={16} /> Export History
                 </button>
-                
-                  href={`mailto:${employee.email}`}
-                  className="btn btn-secondary flex-1 xl:flex-none text-center"
-                  Send Email
+
+                href={`mailto:${employee.email}`}
+                className="btn btn-secondary flex-1 xl:flex-none text-center"
+                Send Email
                 <button
                   onClick={() => {
                     setSelectedShiftId(employee.shiftId || employee.shift?.id || "");
@@ -982,7 +981,7 @@ export default function EmployeeDetail() {
                 )}
 
                 {/* ================= PERFORMANCE ================= */}
-                {activeTab === "performance" && (
+                {/* {activeTab === "performance" && (
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <h2 className="text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>
@@ -1086,7 +1085,7 @@ export default function EmployeeDetail() {
                       )}
                     </div>
                   </div>
-                )}
+                )} */}
 
                 {/* ================= TIMELINE ================= */}
                 {activeTab === "timeline" && (
@@ -1279,7 +1278,7 @@ export default function EmployeeDetail() {
       </Modal>
 
       {/* ================= NEW PERFORMANCE REVIEW MODAL ================= */}
-      <Modal
+      {/* <Modal
         open={reviewModalOpen}
         onClose={() => setReviewModalOpen(false)}
         title="New Performance Review"
@@ -1374,7 +1373,7 @@ export default function EmployeeDetail() {
             </div>
           </div>
         </div>
-      </Modal>
+      </Modal> */}
     </div>
   );
 }

@@ -6,121 +6,130 @@ import {
   UserCheck,
   ArrowRight,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 
 export default function EmployeeSummary({ user }) {
   const employee = user?.employee;
 
+  const items = [
+    {
+      icon: BadgeCheck,
+      label: "Employee ID",
+      value: employee?.employeeId || "Not Assigned",
+    },
+    {
+      icon: Building2,
+      label: "Department",
+      value: employee?.department || "-",
+    },
+    {
+      icon: Briefcase,
+      label: "Designation",
+      value: employee?.designation || "-",
+    },
+    {
+      icon: Calendar,
+      label: "Joining Date",
+      value: employee?.joinDate
+        ? new Date(employee.joinDate).toLocaleDateString()
+        : "-",
+    },
+    {
+      icon: UserCheck,
+      label: "Reporting Manager",
+      value: employee?.reportingManager?.name || "-",
+    },
+  ];
+
   return (
-    <div className="rounded-xl border bg-white dark:bg-gray-900 shadow-sm">
-      <div className="border-b px-6 py-4">
+    <div
+      className="rounded-xl border overflow-hidden"
+      style={{
+        background: "var(--surface)",
+        borderColor: "var(--border)",
+      }}
+    >
+      {/* Header */}
+      <div
+        className="px-5 py-4 border-b"
+        style={{ borderColor: "var(--border)" }}
+      >
         <div className="flex items-center gap-2">
-          <Briefcase className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-semibold">
+          <Briefcase
+            size={18}
+            style={{ color: "var(--primary)" }}
+          />
+
+          <h2
+            className="text-[16px] font-semibold"
+            style={{ color: "var(--text-primary)" }}
+          >
             Employee Summary
           </h2>
         </div>
 
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p
+          className="mt-1 text-[13px]"
+          style={{ color: "var(--text-muted)" }}
+        >
           Overview of your employee information.
         </p>
       </div>
 
-      <div className="p-6 space-y-5">
+      {/* Body */}
+      <div className="p-5">
+        <div className="space-y-4">
+          {items.map(({ icon: Icon, label, value }) => (
+            <div
+              key={label}
+              className="flex items-center gap-4"
+            >
+              <div
+                className="w-10 h-10 rounded-lg flex items-center justify-center"
+                style={{
+                  background: "var(--surface-2)",
+                }}
+              >
+                <Icon
+                  size={18}
+                  style={{ color: "var(--text-secondary)" }}
+                />
+              </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <BadgeCheck className="h-5 w-5 text-muted-foreground" />
+              <div className="min-w-0">
+                <p
+                  className="text-[12px]"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  {label}
+                </p>
 
-            <div>
-              <p className="text-sm text-muted-foreground">
-                Employee ID
-              </p>
-
-              <p className="font-medium">
-                {employee?.employeeId || "Not Assigned"}
-              </p>
+                <p
+                  className="text-[14px] font-medium truncate"
+                  style={{ color: "var(--text-primary)" }}
+                >
+                  {value}
+                </p>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Building2 className="h-5 w-5 text-muted-foreground" />
-
-            <div>
-              <p className="text-sm text-muted-foreground">
-                Department
-              </p>
-
-              <p className="font-medium">
-                {employee?.department || "-"}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Briefcase className="h-5 w-5 text-muted-foreground" />
-
-            <div>
-              <p className="text-sm text-muted-foreground">
-                Designation
-              </p>
-
-              <p className="font-medium">
-                {employee?.designation || "-"}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Calendar className="h-5 w-5 text-muted-foreground" />
-
-            <div>
-              <p className="text-sm text-muted-foreground">
-                Joining Date
-              </p>
-
-              <p className="font-medium">
-                {employee?.joinDate
-                  ? new Date(employee.joinDate).toLocaleDateString()
-                  : "-"}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <UserCheck className="h-5 w-5 text-muted-foreground" />
-
-            <div>
-              <p className="text-sm text-muted-foreground">
-                Reporting Manager
-              </p>
-
-              <p className="font-medium">
-                {employee?.reportingManager?.name || "-"}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="pt-4 border-t">
+        {/* Footer */}
+        <div
+          className="mt-6 pt-4 border-t"
+          style={{ borderColor: "var(--border)" }}
+        >
           <Button
             variant="outline"
-            className="w-full justify-between"
+            className="w-full flex items-center justify-between"
           >
-            View Full Employee Profile
+            <span>View Full Employee Profile</span>
 
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight size={16} />
           </Button>
         </div>
-
       </div>
     </div>
   );

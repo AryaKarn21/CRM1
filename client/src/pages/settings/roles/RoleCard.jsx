@@ -17,7 +17,14 @@ export default function RoleCard({
   selected,
   onToggleSelect,
 }) {
-  const moduleSummary = summarizeByModule(role.permissions).filter((m) => m.granted > 0)
+  const permissions =
+    typeof role.permissions === "string"
+      ? JSON.parse(role.permissions)
+      : role.permissions || {};
+
+  const enabledPermissions = Object.entries(permissions)
+    .filter(([_, value]) => value)
+    .map(([key]) => key);
 
   return (
     <div
@@ -61,18 +68,26 @@ export default function RoleCard({
       </div>
 
       <div className="flex flex-wrap gap-1.5">
-        {moduleSummary.length === 0 ? (
-          <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+        {enabledPermissions.length === 0 ? (
+          <span
+            className="text-[11px]"
+            style={{ color: "var(--text-muted)" }}
+          >
             No permissions assigned
           </span>
         ) : (
-          moduleSummary.map((m) => (
+          enabledPermissions.map((permission) => (
             <span
-              key={m.key}
-              className="px-2 py-1 text-[11px] rounded-md font-medium"
-              style={{ background: 'var(--surface-2)', color: 'var(--text-secondary)' }}
+              key={permission}
+              className="px-2 py-1 text-[11px] rounded-md font-medium capitalize"
+              style={{
+                background: "var(--surface-2)",
+                color: "var(--text-secondary)",
+              }}
             >
-              {m.title} · {m.granted}/{m.total}
+              {permission === "auditlog"
+                ? "Audit Log"
+                : permission.replace(/([A-Z])/g, " $1")}
             </span>
           ))
         )}
